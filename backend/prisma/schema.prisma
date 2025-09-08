@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum ParseStatus {
+  PENDING
+  DONE
+  FAILED
+}
+
+model User {
+  id       String   @id @default(cuid())
+  email    String   @unique
+  name     String
+  password String
+  role     UserRole @default(USER)
+
+  refreshToken String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  resumes Resume[]
+  jobs    Job[]
+
+  @@map("users")
+}
+
+model Resume {
+  id         String   @id @default(cuid())
+  fileName   String
+  fileSize   Int
+  fileUrl    String
+  publicId   String
+  localPath  String?
+  mimeType   String
+  uploadedAt DateTime @default(now())
+
+  parseStatus ParseStatus @default(PENDING)
+  parsedAt    DateTime?
+
+  name       String?
+  email      String?
+  phone      String?
+  skills     String[]
+  experience Int? // years
+  education  String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  matches JobMatch[]
+
+  @@map("resumes")
+}
+
+model Job {
+  id           String   @id @default(cuid())
+  title        String
+  description  String
+  requirements String
+  skills       String[]
+  experience   Int?
+  education    String?
+  location     String?
+  salary       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  matches JobMatch[]
+
+  @@map("jobs")
+}
+
+model JobMatch {
+  id       String @id @default(cuid())
+  jobId    String
+  resumeId String
+
+  overallMatchScore     Float?
+  skillsMatchScore      Float?
+  experienceMatchScore  Float?
+  educationMatchScore   Float?
+  culturalFitMatchScore Float?
+  technicalMatchScore   Float?
+  biasMatchScore        Float?
+
+  matchedSkills   String[]
+  missingSkills   String[]
+  experienceGap   Int?
+  educationMatch  String?
+  aiMatchInsights String?
+
+  matchedAt DateTime @default(now())
+
+  job    Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, resumeId])
+  @@map("job_matches")
+}

@@ -1,0 +1,41 @@
+services:
+   resume_postgres:
+      image: postgres:16-alpine
+      container_name: resume_postgres
+      environment:
+         POSTGRES_USER: postgres
+         POSTGRES_PASSWORD: Parvati..18
+         POSTGRES_DB: resumedb
+      volumes:
+         - resumepgdata:/var/lib/postgresql/data
+      ports:
+         - "5432:5432"
+
+   resume_node_api:
+      build:
+         context: ../backend
+         dockerfile: ../backend/Dockerfile
+      container_name: resume_node_api
+      depends_on:
+         - "resume_postgres"
+      environment:
+         PORT: 3000
+         DATABASE_URL: "postgresql://postgres:Parvati..18@resume_postgres:5432/resumedb"
+         ACCESS_TOKEN_SECRET: thisisanaccessstring
+         ACCESS_TOKEN_EXPIRY: 15m
+         REFRESH_TOKEN_SECRET: thisisarefreshstring
+         REFRESH_TOKEN_EXPIRY: 7d
+         CLOUDINARY_CLOUD_NAME: dn15yjlpk
+         CLOUDINARY_API_KEY: 758987513159177
+         CLOUDINARY_API_SECRET: JDVdd9ldIyYSei1LvriUqlieIDo
+         NODE_ENV: development
+         COOKIE_SECURE: false
+      volumes:
+         - ../backend:/app
+         - /app/node_modules
+      ports:
+         - "3000:3000"
+         - "5555:5555"
+
+volumes:
+   resumepgdata:
