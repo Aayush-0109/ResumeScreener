@@ -5,6 +5,7 @@ from src.utils.logger import logger
 from src.models.responses import SuccessResponse, ErrorResponse
 from src.middleware.error_handler import error_handler
 from fastapi.middleware.cors import CORSMiddleware
+from src.controllers.parse_controller import router as parse_router
 
 app = FastAPI(
     title = settings.app_name,
@@ -12,6 +13,7 @@ app = FastAPI(
     debug = settings.debug
 )
 
+app.include_router(parse_router)
 app.add_middleware(
  CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://localhost:5173"],  # adjust later if needed
