@@ -34,6 +34,9 @@ model User {
   jobs    Job[]
 
   @@map("users")
+  @@index([role])
+  @@index([createdAt])
+  @@index([email])
 }
 
 model Resume {
@@ -62,6 +65,14 @@ model Resume {
   matches JobMatch[]
 
   @@map("resumes")
+  @@index([userId])
+  @@index([parseStatus])
+  @@index([uploadedAt])
+  @@index([experience])
+  @@index([skills])
+  @@index([name])
+  @@index([email])
+  
 }
 
 model Job {
@@ -83,6 +94,13 @@ model Job {
   matches JobMatch[]
 
   @@map("jobs")
+  @@index([title])
+  @@index([skills])
+  @@index([experience])
+  @@index([education])
+  @@index([location])
+  @@index([createdAt])
+  @@index([updatedAt])
 }
 
 model JobMatch {
@@ -111,4 +129,10 @@ model JobMatch {
 
   @@unique([jobId, resumeId])
   @@map("job_matches")
+  @@index([jobId])
+  @@index([resumeId])
+  @@index([overallMatchScore])
+  @@index([skillsMatchScore])
+  @@index([experienceMatchScore])
+  @@index([matchedAt])
 }
