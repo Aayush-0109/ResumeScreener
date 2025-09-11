@@ -33,18 +33,17 @@ model User {
   resumes Resume[]
   jobs    Job[]
 
-  @@map("users")
   @@index([role])
   @@index([createdAt])
   @@index([email])
+  @@map("users")
 }
 
 model Resume {
   id         String   @id @default(cuid())
   fileName   String
+  fileBuffer Bytes?
   fileSize   Int
-  fileUrl    String
-  publicId   String
   localPath  String?
   mimeType   String
   uploadedAt DateTime @default(now())
@@ -64,7 +63,6 @@ model Resume {
 
   matches JobMatch[]
 
-  @@map("resumes")
   @@index([userId])
   @@index([parseStatus])
   @@index([uploadedAt])
@@ -72,7 +70,7 @@ model Resume {
   @@index([skills])
   @@index([name])
   @@index([email])
-  
+  @@map("resumes")
 }
 
 model Job {
@@ -93,7 +91,6 @@ model Job {
 
   matches JobMatch[]
 
-  @@map("jobs")
   @@index([title])
   @@index([skills])
   @@index([experience])
@@ -101,6 +98,7 @@ model Job {
   @@index([location])
   @@index([createdAt])
   @@index([updatedAt])
+  @@map("jobs")
 }
 
 model JobMatch {
@@ -128,11 +126,11 @@ model JobMatch {
   resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
 
   @@unique([jobId, resumeId])
-  @@map("job_matches")
   @@index([jobId])
   @@index([resumeId])
   @@index([overallMatchScore])
   @@index([skillsMatchScore])
   @@index([experienceMatchScore])
   @@index([matchedAt])
+  @@map("job_matches")
 }

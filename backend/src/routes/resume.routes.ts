@@ -1,15 +1,14 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware.js';
+import { uploadMany, listMyResumes, removeOne, clearMyResumes } from '../controllers/resume.controller.js';
 import { uploadMultipleResumes } from '../middleware/upload.middleware.js';
-import { uploadMany, listMine, removeOne } from '../controllers/resume.controller.js';
-import { validateParams, validateQuery } from '../middleware/validation.middleware.js';
-import { listResumesQuery, resumeIdParams, uploadResumesQuery } from '../types/zod/resume.schema.js';
-import { gentleLimit, uploaderLimit } from '../middleware/ratelimit.middleware.js';
+import { gentleLimit, moderateLimit } from '../middleware/ratelimit.middleware.js';
 
 const router = Router();
 
-router.post('/upload', authMiddleware, uploaderLimit,validateQuery(uploadResumesQuery), uploadMultipleResumes, uploadMany);
-router.get('/my', authMiddleware,  gentleLimit,validateQuery(listResumesQuery), listMine);
-router.delete('/:id', authMiddleware, gentleLimit ,validateParams(resumeIdParams), removeOne);
+router.post('/upload-many', authMiddleware, uploadMultipleResumes, moderateLimit, uploadMany);
+router.get('/my', authMiddleware, gentleLimit, listMyResumes);
+router.delete('/clear-session', authMiddleware, moderateLimit, clearMyResumes);
+router.delete('/:id', authMiddleware, moderateLimit, removeOne);
 
 export default router;

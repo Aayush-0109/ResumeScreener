@@ -1,11 +1,14 @@
-from fastapi import FastAPI
+
+
+from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from src.config.settings import settings
 from src.utils.logger import logger
 from src.models.responses import SuccessResponse, ErrorResponse
-from src.middleware.error_handler import error_handler
+from src.middleware.error_handler import  handle_http_exception, handle_unexpected_exception, handle_validation_error
 from fastapi.middleware.cors import CORSMiddleware
 from src.controllers.parse_controller import router as parse_router
+from src.controllers.matching_controller import router as matching_router
 
 app = FastAPI(
     title = settings.app_name,
@@ -14,14 +17,16 @@ app = FastAPI(
 )
 
 app.include_router(parse_router)
+app.include_router(matching_router)
 app.add_middleware(
  CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],  # adjust later if needed
+    allow_origins=["http://localhost:3000", "http://localhost:5173"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"])
-app.add_exception_handler(Exception , error_handler)
-app.add_exception_handler(RequestValidationError , error_handler)
+app.add_exception_handler(HTTPException, handle_http_exception)
+app.add_exception_handler(RequestValidationError, handle_validation_error)
+app.add_exception_handler(Exception, handle_unexpected_exception)
 
 @app.get("/")
 def read_root():

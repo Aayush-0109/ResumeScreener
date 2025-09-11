@@ -24,7 +24,6 @@ export class JobService {
                     { requirements: { contains: q, mode: 'insensitive' } }
                 ]
             })
-            // todo : apply filtter
         }
         const orderBy: Prisma.JobOrderByWithRelationInput[] =
             (query.sort && query.sort.length)

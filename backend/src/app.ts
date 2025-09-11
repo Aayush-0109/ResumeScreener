@@ -20,7 +20,7 @@ app.use(cors());
 app.use(morgan('combined'));
 
 
-//Routes
+
 app.use("/api/auth",authRouter)
 app.use('/api/resumes', resumeRouter);
 app.use('/api/jobs', jobRoutes);

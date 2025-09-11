@@ -6,6 +6,7 @@ export const notFound = (req: Request, res: Response, next: NextFunction) => {
     return next(new NotFoundError("Route not found"));
 }
   
+
 export const errorMiddleware = (error: Error | ApiError, req: Request, res: Response, next: NextFunction) => {
     if (error instanceof ApiError) {
         res.status(error.statusCode).json({

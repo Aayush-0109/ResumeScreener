@@ -13,4 +13,3 @@ class ParsedResume(BaseModel):
     skills: List[str] = []
     experience: Optional[int] = None 
     education: Optional[str] = None
-    raw_text: Optional[str] = None
