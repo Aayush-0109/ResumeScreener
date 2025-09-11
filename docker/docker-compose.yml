@@ -21,21 +21,21 @@ services:
          - "resume_postgres"
       environment:
          PORT: 3000
-         DATABASE_URL: "postgresql://postgres:Parvati..18@resume_postgres:5432/resumedb"
-         ACCESS_TOKEN_SECRET: thisisanaccessstring
+         DATABASE_URL: 
+         ACCESS_TOKEN_SECRET: 
          ACCESS_TOKEN_EXPIRY: 15m
-         REFRESH_TOKEN_SECRET: thisisarefreshstring
+         REFRESH_TOKEN_SECRET: 
          REFRESH_TOKEN_EXPIRY: 7d
-         CLOUDINARY_CLOUD_NAME: dn15yjlpk
-         CLOUDINARY_API_KEY: 758987513159177
-         CLOUDINARY_API_SECRET: JDVdd9ldIyYSei1LvriUqlieIDo
+         CLOUDINARY_CLOUD_NAME: 
+         CLOUDINARY_API_KEY: 
+         CLOUDINARY_API_SECRET: 
          NODE_ENV: development
          COOKIE_SECURE: false
          AI_SERVICE_URL: http://host.docker.internal:8000
-         REDIS_HOST : redis-18270.c261.us-east-1-4.ec2.redns.redis-cloud.com
-         REDIS_PASSWORD : M7GElZIif5XHsnhlP3TpDk88s3hHnYib
-         REDIS_USERNAME : default
-         REDIS_PORT : 18270
+         REDIS_HOST : 
+         REDIS_PASSWORD : 
+         REDIS_USERNAME : 
+         REDIS_PORT : 
       volumes:
          - ../backend:/app
          - /app/node_modules
