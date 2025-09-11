@@ -32,6 +32,10 @@ services:
          NODE_ENV: development
          COOKIE_SECURE: false
          AI_SERVICE_URL: http://host.docker.internal:8000
+         REDIS_HOST : redis-18270.c261.us-east-1-4.ec2.redns.redis-cloud.com
+         REDIS_PASSWORD : M7GElZIif5XHsnhlP3TpDk88s3hHnYib
+         REDIS_USERNAME : default
+         REDIS_PORT : 18270
       volumes:
          - ../backend:/app
          - /app/node_modules
