@@ -9,10 +9,10 @@ class RedisService{
        this.redis = client
      }
 
-     async set (key:string , data :ApiResponse<Object>, ttl : number = 300){
+     async set (key:string , data :ApiResponse<any>, ttl : number = 300){
            const jsonData = JSON.stringify(data)
         try {
-          console.log(key +" : "+ data);
+          console.log("SET  : "+ data);
           
             const result  =  await this.redis.setex(key,ttl,jsonData)
             if(result!="OK") throw new InternalServerError("Error in setting cache"); 
@@ -23,10 +23,8 @@ class RedisService{
      }
      async get(key:string){
       try {
-        console.log("GET : "+key);
-        
         const cacheData = await this.redis.get(key);
-        const parsedData = cacheData ? JSON.parse(cacheData) : null;
+        const parsedData  : ApiResponse<any> = cacheData ? JSON.parse(cacheData) : null;
         console.log(key + " " + cacheData);
         
         return parsedData
@@ -48,9 +46,10 @@ class RedisService{
      async delPattern(pattern : string){
       try {
         const keys =await  this.redis.keys(pattern);
-        const result = this.redis.unlink(...keys);
+        if(keys.length){
+        const result = await this.redis.unlink(keys);
         console.log("DELPATTERN : "+ pattern +" " + result);
-        
+        }
       } catch (error: any) {
         console.log(error.message);
         

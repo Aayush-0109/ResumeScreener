@@ -11,7 +11,7 @@ type AiBatchMatchReq = {
 };
 type AiBatchMatchResp = { data?: { topN: number; matched: Array<{ resumeId: string; scores: any }> } };
 
-export class MatchingService {
+ class MatchingService {
   
   async matchJobForUserViaAI(jobId: string, userId: string, opts?: { topN?: number; weights?: Record<string, number>; insightsTopK?: number }) {
     const job = await prisma.job.findFirst({ where: { id: jobId, userId } });
@@ -132,3 +132,4 @@ export class MatchingService {
     return { deleted: result.count };
   }
 }
+export default new MatchingService()

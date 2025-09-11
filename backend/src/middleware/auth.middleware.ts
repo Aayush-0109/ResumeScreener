@@ -23,7 +23,7 @@ export const authMiddleware = asyncHandler(async(req : Request ,res : Response ,
         }
     })
     if(!user) throw new UnauthorizedError("User not authenticated");
-    console.log(user);
+   
     
    (req as any).user = user;
 next();

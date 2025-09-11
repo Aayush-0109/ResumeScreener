@@ -25,7 +25,7 @@ async function parseViaAiService(fileBuffer: Buffer, fileName: string, mimeType:
   return { parsed: j.data?.parsed, source: j.data?.meta?.source ?? null };
 }
 
-export class ResumeService implements IResumeService {
+ class ResumeService implements IResumeService {
   async uploadMany(files: UploadInput[], userId: string): Promise<UploadManyResult> {
     if (!files?.length) throw new ValidationError('No files provided');
 
@@ -154,3 +154,4 @@ export class ResumeService implements IResumeService {
     return { deletedCount: result.count };
   }
 }
+export default new ResumeService()

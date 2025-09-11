@@ -1,16 +1,19 @@
 import { Request, Response } from 'express';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/AsyncHandler.js';
-import { MatchingService } from '../services/matching.service.js';
-
-const service = new MatchingService();
+import service from '../services/matching.service.js';
+import redisService from '../services/redis.service.js';
 
 export const matchForJob = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
   const { jobId } = req.params;
   const topN = req.query.topN ? Number(req.query.topN) : undefined;
   const weights = req.body?.weights;
+  await service.clearMatches(jobId,userId);
   const result = await service.matchJobForUserViaAI(jobId, userId, { topN, weights, insightsTopK: 5 });
+
+  await redisService.delPattern(`GET//jobs/${jobId}/*`)
+
   return res.json(new ApiResponse(200, 'Matched', result));
 });
 

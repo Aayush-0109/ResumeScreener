@@ -4,9 +4,10 @@ import { listMatches, matchForJob, clearMatches } from '../controllers/matching.
 import { gentleLimit, moderateLimit } from '../middleware/ratelimit.middleware.js';
 import { validateBody, validateQuery } from '../middleware/validation.middleware.js';
 import { ListMatchesQuerySchema, MatchRequestSchema } from '../types/zod/matching.schema.js';
+import { cacheResponse } from '../middleware/cache.middleware.js';
 
 const router = Router();
 router.post('/jobs/:jobId/match', authMiddleware, validateBody(MatchRequestSchema), moderateLimit, matchForJob);
-router.get('/jobs/:jobId/matches', authMiddleware, gentleLimit, validateQuery(ListMatchesQuerySchema), listMatches);
+router.get('/jobs/:jobId/matches', authMiddleware, gentleLimit, validateQuery(ListMatchesQuerySchema), cacheResponse(15*60),listMatches);
 router.delete('/jobs/:jobId/matches', authMiddleware, gentleLimit, clearMatches);
 export default router;

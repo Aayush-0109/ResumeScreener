@@ -1,11 +1,11 @@
-import { ResumeService } from "../services/resume.service.js";
+import  service  from "../services/resume.service.js";
 import { ValidationError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { Request, Response } from 'express'
 import { ListMyResumesQuery } from '../types/resume.types.js';
 
-const service = new ResumeService();
+
 
 export const uploadMany = asyncHandler(async (req: Request, res: Response) => {
   const files = (req.files as Express.Multer.File[]) || [];
