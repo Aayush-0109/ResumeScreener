@@ -48,7 +48,7 @@ export class ResumeService implements IResumeService {
             email: parsed.email ?? null,
             phone: parsed.phone ?? null,
             skills: Array.isArray(parsed.skills) ? parsed.skills : [],
-            experience: parsed.experience ?? null,
+            experience: (typeof parsed.experience === 'number' && Number.isFinite(parsed.experience)) ? parsed.experience : 0,
             education: parsed.education ?? null
           });
         }
@@ -73,30 +73,37 @@ export class ResumeService implements IResumeService {
     const limit = Math.min(50, Math.max(1, Number(query.limit) || 10));
     const skip = (page - 1) * limit;
 
-    // Add filtering options
     const whereClause: any = { userId };
 
-    if (query.skills && query.skills.length > 0) {
-      whereClause.skills = { hasSome: query.skills };
+    const rawSkills = (query as any).skills as string[] | string | undefined;
+
+    const skillsParam =
+      Array.isArray(rawSkills)
+        ? rawSkills
+        : typeof rawSkills === 'string'
+          ? rawSkills.split(',').map(s => s.trim()).filter(Boolean)
+          : undefined;
+
+    if (skillsParam && skillsParam.length > 0) {
+      whereClause.skills = { hasSome: skillsParam };
     }
 
-    if (query.experienceMin !== undefined) {
-      whereClause.experience = { gte: query.experienceMin };
-    }
+    const expMinRaw = (query as any).experienceMin;
+    const expMaxRaw = (query as any).experienceMax;
+    const expMin = expMinRaw !== undefined ? Number(expMinRaw) : undefined;
+    const expMax = expMaxRaw !== undefined ? Number(expMaxRaw) : undefined;
 
-    if (query.experienceMax !== undefined) {
-      whereClause.experience = { ...whereClause.experience, lte: query.experienceMax };
-    }
-
-    if (query.education) {
-      whereClause.education = { contains: query.education, mode: 'insensitive' };
+    if (expMin !== undefined || expMax !== undefined) {
+      whereClause.experience = {
+        ...(expMin !== undefined ? { gte: expMin } : {}),
+        ...(expMax !== undefined ? { lte: expMax } : {})
+      };
     }
 
     const [total, rows] = await Promise.all([
       prisma.resume.count({ where: whereClause }),
       prisma.resume.findMany({
         where: whereClause,
-        orderBy: { uploadedAt: 'desc' },
         skip,
         take: limit,
         select: {

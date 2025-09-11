@@ -1,14 +1,26 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-export const MatchWeightsSchema = z.object({
-    skills: z.number().nonnegative().optional(),
-    experience: z.number().nonnegative().optional(),
-    education: z.number().nonnegative().optional()
-  }).refine(w => (w.skills ?? 0) + (w.experience ?? 0) + (w.education ?? 0) > 0, {
-    message: "At least one weight must be > 0"
-  });
-  
-  export const MatchRequestSchema = z.object({
-    weights: MatchWeightsSchema.optional(),
-    topN: z.number().int().min(1).max(100).optional()
-  });
+export const MatchRequestSchema = z.object({
+  weights: z.object({
+    skills: z.number().min(0).max(1).optional(),
+    experience: z.number().min(0).max(1).optional(),
+    education: z.number().min(0).max(1).optional(),
+    technical: z.number().min(0).max(1).optional()
+  }).partial().optional()
+});
+
+export const ListMatchesQuerySchema = z.object({
+  page: z.preprocess(v => Number(v), z.number().int().min(1)).optional(),
+  limit: z.preprocess(v => Number(v), z.number().int().min(1).max(50)).optional(),
+  sortField: z.enum([
+    'overallMatchScore',
+    'skillsMatchScore',
+    'experienceMatchScore',
+    'educationMatchScore',
+    'technicalMatchScore',
+    'culturalFitMatchScore',
+    'biasMatchScore',
+    'matchedAt'
+  ]).optional(),
+  sortOrder: z.enum(['asc', 'desc']).optional()
+});

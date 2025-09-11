@@ -13,3 +13,17 @@ export const matchForJob = asyncHandler(async (req: Request, res: Response) => {
   const result = await service.matchJobForUserViaAI(jobId, userId, { topN, weights, insightsTopK: 5 });
   return res.json(new ApiResponse(200, 'Matched', result));
 });
+
+export const listMatches = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user.id;
+  const { jobId } = req.params;
+  const result = await service.listMatches(jobId, userId, req.query as any);
+  return res.json(new ApiResponse(200, 'OK', result));
+});
+
+export const clearMatches = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user.id;
+  const { jobId } = req.params;
+  const result = await service.clearMatches(jobId, userId);
+  return res.json(new ApiResponse(200, 'Cleared', result));
+});

@@ -55,7 +55,7 @@ model Resume {
   email      String?
   phone      String?
   skills     String[]
-  experience Int? // years
+  experience Int? @default(0)
   education  String?
 
   userId String
