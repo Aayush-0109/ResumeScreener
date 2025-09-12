@@ -5,12 +5,13 @@ import { uploadMultipleResumes } from '../middleware/upload.middleware.js';
 import { gentleLimit, moderateLimit } from '../middleware/ratelimit.middleware.js';
 import { validateQuery } from '../middleware/validation.middleware.js';
 import { listResumesQuery } from '../types/zod/resume.schema.js';
+import { cacheResponse } from '../middleware/cache.middleware.js';
 
 const router = Router();
 
-router.post('/upload-many', authMiddleware, uploadMultipleResumes, moderateLimit, uploadMany);
-router.get('/my', authMiddleware, gentleLimit, validateQuery(listResumesQuery),listMyResumes);
-router.delete('/clear-all', authMiddleware, moderateLimit, clearMyResumes);
-router.delete('/:id', authMiddleware, moderateLimit, removeOne);
+router.post('/resume/upload-many', authMiddleware, uploadMultipleResumes, moderateLimit, uploadMany);
+router.get('/resume/my', authMiddleware, gentleLimit, validateQuery(listResumesQuery), cacheResponse(24*60*60),listMyResumes);
+router.delete('/resume/clear-all', authMiddleware, moderateLimit, clearMyResumes);
+router.delete('/resume/:id', authMiddleware, moderateLimit, removeOne);
 
 export default router;

@@ -4,7 +4,7 @@ import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
 export const cacheResponse = (ttl : number) => asyncHandler(async (req : Request  , res :Response, next : NextFunction)=>{
-     const key = `${req.method}/${req.url}`
+     const key = `${(req as any).user.id}/${req.method}/${req.url}`
     const result =  await redisService.get(key);
     if(result){
        

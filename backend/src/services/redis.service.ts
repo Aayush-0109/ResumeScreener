@@ -45,6 +45,8 @@ class RedisService{
      }
      async delPattern(pattern : string){
       try {
+        console.log("DEL : "+pattern);
+        
         const keys =await  this.redis.keys(pattern);
         if(keys.length){
         const result = await this.redis.unlink(keys);

@@ -4,11 +4,13 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/AsyncHandler.js';
 import { SearchQuery } from '../types/general.types.js';
 import matchingService from '../services/matching.service.js';
+import redisService from '../services/redis.service.js';
 const service = new JobService();
 
 export const createJob = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
   const job = await service.create(userId, req.body);
+  await redisService.delPattern(`${userId}/GET//job*`)
   res.status(201).json(new ApiResponse(201, 'Job created', job));
 });
 
@@ -28,6 +30,7 @@ export const updateJob = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
   const job = await service.update(req.params.id, userId, req.body);
   await matchingService.clearMatches(req.params.id,userId);
+  await redisService.delPattern(`${userId}/GET//job*`)
   res.json(new ApiResponse(200, 'Updated', job));
 });
 
@@ -35,5 +38,6 @@ export const deleteJob = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
   const result = await service.remove(req.params.id, userId);
   await matchingService.clearMatches(req.params.id,userId);
+  await redisService.delPattern(`${userId}/GET//job*`)
   res.json(new ApiResponse(200, 'Deleted', result));
 });

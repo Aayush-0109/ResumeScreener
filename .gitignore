@@ -38,6 +38,7 @@ __pycache__/
 
 # Docker
 *.local
+docker/docker-compose.yml
 
 # Python bytecode
 __pycache__/
