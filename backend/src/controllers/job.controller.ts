@@ -29,15 +29,17 @@ export const getJob = asyncHandler(async (req: Request, res: Response) => {
 export const updateJob = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
   const job = await service.update(req.params.id, userId, req.body);
-  await matchingService.clearMatches(req.params.id,userId);
+  await matchingService.clearMatches(req.params.id, userId);
   await redisService.delPattern(`${userId}/GET//job*`)
+  await redisService.delPattern(`${userId}/GET//match/${req.params.id}/*`)
   res.json(new ApiResponse(200, 'Updated', job));
 });
 
 export const deleteJob = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
   const result = await service.remove(req.params.id, userId);
-  await matchingService.clearMatches(req.params.id,userId);
+  await matchingService.clearMatches(req.params.id, userId);
   await redisService.delPattern(`${userId}/GET//job*`)
+  await redisService.delPattern(`${userId}/GET//match/${req.params.id}/*`)
   res.json(new ApiResponse(200, 'Deleted', result));
 });

@@ -5,6 +5,7 @@ import { asyncHandler } from "../utils/AsyncHandler.js";
 import { Request, Response } from 'express'
 import { ListMyResumesQuery } from '../types/resume.types.js';
 import redisService from "../services/redis.service.js";
+import matchingService from "../services/matching.service.js";
 
 
 
@@ -21,6 +22,8 @@ export const uploadMany = asyncHandler(async (req: Request, res: Response) => {
   }))
   const result = await service.uploadMany(inputs, userId);
   await redisService.delPattern(`${userId}/GET//resume/my*`)
+  await matchingService.clearAllUserMatches(userId);
+  await redisService.delPattern(`${userId}/GET//match*`)
   return res.status(201).json(new ApiResponse(201, 'Uploaded', result));
 })
 export const listMyResumes = asyncHandler(async (req: Request, res: Response) => {
@@ -34,13 +37,17 @@ export const removeOne = async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
   const { id } = req.params;
   const result = await service.deleteById(id, userId);
-  await redisService.delPattern(`${(req as any).id}/GET//resume/my*`)
+  await redisService.delPattern(`${userId}/GET//resume/my*`)
+  await matchingService.clearAllUserMatches(userId);
+  await redisService.delPattern(`${userId}/GET//match*`)
   return res.json(new ApiResponse(200, 'Deleted', result));
 };
 
 export const clearMyResumes = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
   const result = await service.clearUserResumes(userId);
-  await redisService.delPattern(`${(req as any).id}/GET//resume/my*`)
+  await redisService.delPattern(`${userId}/GET//resume/my*`)
+  await matchingService.clearAllUserMatches(userId);
+  await redisService.delPattern(`${userId}/GET//match*`)
   return res.json(new ApiResponse(200, 'Session cleared', result));
 });

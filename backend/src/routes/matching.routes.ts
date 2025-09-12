@@ -7,7 +7,7 @@ import { ListMatchesQuerySchema, MatchRequestSchema } from '../types/zod/matchin
 import { cacheResponse } from '../middleware/cache.middleware.js';
 
 const router = Router();
-router.post('/jobs/:jobId/match', authMiddleware, validateBody(MatchRequestSchema), moderateLimit, matchForJob);
-router.get('/jobs/:jobId/matches', authMiddleware, gentleLimit, validateQuery(ListMatchesQuerySchema), cacheResponse(15*60),listMatches);
-router.delete('/jobs/:jobId/matches', authMiddleware, gentleLimit, clearMatches);
+router.post('/match/:jobId/match', authMiddleware, validateBody(MatchRequestSchema), moderateLimit, matchForJob);
+router.get('/match/:jobId/matches', authMiddleware, gentleLimit, validateQuery(ListMatchesQuerySchema), cacheResponse(15*60),listMatches);
+router.delete('/match/:jobId/matches', authMiddleware, gentleLimit, clearMatches);
 export default router;

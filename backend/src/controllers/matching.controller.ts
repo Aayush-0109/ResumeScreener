@@ -12,7 +12,7 @@ export const matchForJob = asyncHandler(async (req: Request, res: Response) => {
   await service.clearMatches(jobId,userId);
   const result = await service.matchJobForUserViaAI(jobId, userId, { topN, weights, insightsTopK: 5 });
 
-  await redisService.delPattern(`GET//jobs/${jobId}/*`)
+  await redisService.delPattern(`${userId}/GET//match/${jobId}/*`)
 
   return res.json(new ApiResponse(200, 'Matched', result));
 });
@@ -28,5 +28,6 @@ export const clearMatches = asyncHandler(async (req: Request, res: Response) => 
   const userId = (req as any).user.id;
   const { jobId } = req.params;
   const result = await service.clearMatches(jobId, userId);
+  await redisService.delPattern(`${userId}/GET//match/${jobId}/*`)
   return res.json(new ApiResponse(200, 'Cleared', result));
 });

@@ -24,7 +24,7 @@ app.use(cors());
 app.use("/api/auth",authRouter)
 app.use('/api/resumes', resumeRouter);
 app.use('/api/jobs', jobRoutes);
-app.use('/api/match', matchingRoutes);
+app.use('/api/matches', matchingRoutes);
 
 app.get('/api/health', (req, res) => {
     res.json({

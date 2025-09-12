@@ -11,8 +11,8 @@ type AiBatchMatchReq = {
 };
 type AiBatchMatchResp = { data?: { topN: number; matched: Array<{ resumeId: string; scores: any }> } };
 
- class MatchingService {
-  
+class MatchingService {
+
   async matchJobForUserViaAI(jobId: string, userId: string, opts?: { topN?: number; weights?: Record<string, number>; insightsTopK?: number }) {
     const job = await prisma.job.findFirst({ where: { id: jobId, userId } });
     if (!job) return { topN: opts?.topN ?? 10, matched: [] };
@@ -98,8 +98,8 @@ type AiBatchMatchResp = { data?: { topN: number; matched: Array<{ resumeId: stri
     const sortField = (query as any).sortField as string | undefined;
     const sortOrder = ((query as any).sortOrder as string | undefined)?.toLowerCase() === 'asc' ? 'asc' : 'desc';
     const orderBy = sortField
-    ? [{ [sortField]: sortOrder as any }, { matchedAt: 'desc' as const }]
-    : [{ overallMatchScore: 'desc' as const }, { matchedAt: 'desc' as const }];
+      ? [{ [sortField]: sortOrder as any }, { matchedAt: 'desc' as const }]
+      : [{ overallMatchScore: 'desc' as const }, { matchedAt: 'desc' as const }];
 
     const job = await prisma.job.findFirst({ where: { id: jobId, userId } });
     if (!job) return { data: [], page, limit, total: 0, totalPages: 1 };
@@ -130,6 +130,22 @@ type AiBatchMatchResp = { data?: { topN: number; matched: Array<{ resumeId: stri
     if (!job) return { deleted: 0 };
     const result = await prisma.jobMatch.deleteMany({ where: { jobId } });
     return { deleted: result.count };
+  }
+  async clearAllUserMatches(userId: string): Promise<void> {
+    const jobs = await prisma.job.findMany({
+      where: {
+        userId: userId
+      }
+    });
+    const jobIds = jobs.map((j) => j.id);
+    const result = await prisma.jobMatch.deleteMany({
+      where: {
+        jobId: {
+          in: jobIds
+        }
+      }
+    })
+    console.log("Deleted matches for user : " + result.count);
   }
 }
 export default new MatchingService()
