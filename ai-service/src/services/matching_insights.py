@@ -1,18 +1,9 @@
 import os, json
 from typing import Optional, List, Dict, Any
 import math
-import google.generativeai as genai
-from sentence_transformers import SentenceTransformer, util
+# Remove sentence transformer imports
 from src.models.matching import JobInput, ResumeInput, MatchScores, BatchMatchResponseItem
 from src.utils.logger import logger
-
-# Load model with error handling
-try:
-    _model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-    logger.info("Sentence transformer model loaded successfully")
-except Exception as e:
-    logger.error(f"Failed to load sentence transformer model: {e}")
-    _model = None
 
 DEFAULT_WEIGHTS = {"skills":0.35,"experience":0.25,"education":0.10,"technical":0.30,"cultural":0.0,"bias":0.0}
 _KEYS = ["skills","experience","education","technical","cultural","bias"]
@@ -63,23 +54,24 @@ def _join_resume(r: ResumeInput) -> str:
     if r.education: parts.append(f"education: {r.education}")
     return "\n".join([p for p in parts if p])
 
-def _embed(texts: List[str]):
-    if _model is None:
-        # Fallback: return random embeddings if model failed to load
-        import torch
-        return torch.randn(len(texts), 384)  # MiniLM-L6-v2 has 384 dimensions
-    return _model.encode(texts, convert_to_tensor=True, normalize_embeddings=True)
+def _simple_text_similarity(text1: str, text2: str) -> float:
+    """Simple text similarity based on common words"""
+    words1 = set(text1.lower().split())
+    words2 = set(text2.lower().split())
+    if not words1 and not words2: return 0.0
+    intersection = len(words1 & words2)
+    union = len(words1 | words2)
+    return (intersection / union) * 100.0 if union > 0 else 0.0
 
-def score_one(job: JobInput, r: ResumeInput, job_emb, weights: Dict[str,float]) -> MatchScores:
+def score_one(job: JobInput, r: ResumeInput, job_text: str, weights: Dict[str,float]) -> MatchScores:
     js = _norm_list(job.skills); rs = _norm_list(r.skills)
     jacc = _jaccard(js, rs)
     exp_s, gap = _experience_score(job.experience, r.experience)
     edu_s, edu_m = _education_match(job.education, r.education)
 
     res_text = _join_resume(r)
-    res_emb = _embed([res_text])[0]
-    cos = float(util.cos_sim(job_emb, res_emb).item())
-    tech_s = round(100.0 * max(0.0, min(1.0, cos)), 1)
+    # Use simple text similarity instead of sentence transformers
+    tech_s = _simple_text_similarity(job_text, res_text)
 
     comps = {
         "skills": jacc,
@@ -99,7 +91,7 @@ def score_one(job: JobInput, r: ResumeInput, job_emb, weights: Dict[str,float]) 
         skillsMatchScore=round(jacc,1),
         experienceMatchScore=round(exp_s,1),
         educationMatchScore=round(edu_s,1),
-        technicalMatchScore=tech_s,
+        technicalMatchScore=round(tech_s,1),
         culturalFitMatchScore=None,
         biasMatchScore=None,
         matchedSkills=matched,
@@ -110,25 +102,10 @@ def score_one(job: JobInput, r: ResumeInput, job_emb, weights: Dict[str,float]) 
     )
 
 def score_batch(job: JobInput, resumes: List[ResumeInput], topN: Optional[int], weights: Optional[Dict[str,float]], insight_fn=None, insightsTopK: int = 0) -> List[BatchMatchResponseItem]:
-    W = _normalize_weights(weights)
-    job_text = _join_job(job)
-    job_emb = _embed([job_text])[0]
+    # Deprecated duplicate. Use src.services.matching_service.score_batch
+    raise NotImplementedError("Use src.services.matching_service.score_batch instead")
 
-    items = []
-    for r in resumes:
-        s = score_one(job, r, job_emb, W)
-        items.append(BatchMatchResponseItem(resumeId=r.id, scores=s))
-
-    items.sort(key=lambda x: (x.scores.overallMatchScore or 0), reverse=True)
-    items = items[: topN] if topN else items
-
-    if insight_fn and insightsTopK > 0:
-        for it in items[:insightsTopK]:
-            it.scores.aiMatchInsights = insight_fn(job, it)  # short string
-
-    return items
-
-def make_gemini_insight_fn():
+def make_rule_based_insight_fn():
     def insight_fn(job: JobInput, match: BatchMatchResponseItem) -> Optional[str]:
         try:
             # Simple insight based on scores

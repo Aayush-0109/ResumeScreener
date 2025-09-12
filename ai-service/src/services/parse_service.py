@@ -53,7 +53,6 @@ def _extract_text_from_docx(raw_bytes: bytes) -> str:
         return ""
 
 def _extract_text_from_doc_via_textract(raw_bytes: bytes) -> str:
-    # textract not available, skip .doc parsing
     return ""
 
 def _has_soffice() -> bool:
@@ -282,35 +281,7 @@ def _call_groq_or_none(text: str) -> Optional[Dict[str, Any]]:
         logger.info(f"groq failed: {e}")
         return None
 
-def _call_ollama_or_none(text: str) -> Optional[Dict[str, Any]]:
-    try:
-        import requests
-    except Exception:
-        return None
-    try:
-        r = requests.post(
-            "http://127.0.0.1:11434/api/chat",
-            json={
-                "model": "llama3.1:8b",
-                "messages": [
-                    {"role": "system", "content": "Return valid JSON only."},
-                    {"role": "user", "content": _prompt(text)},
-                ],
-                "stream": False,
-                "options": {"temperature": 0.1}
-            },
-            timeout=60
-        )
-        r.raise_for_status()
-        content = r.json().get("message", {}).get("content", "{}")
-        try:
-            return json.loads(content)
-        except json.JSONDecodeError:
-            jt = content[content.find("{"): content.rfind("}")+1]
-            return json.loads(jt)
-    except Exception as e:
-        logger.info(f"ollama failed: {e}")
-        return None
+
 
 def _call_hf_or_none(text: str) -> Optional[Dict[str, Any]]:
     try:
@@ -347,7 +318,6 @@ def _call_any_llm_or_none(text: str) -> Tuple[Optional[Dict[str, Any]], Optional
     for name, fn in (
         ("gemini", _call_gemini_or_none),
         ("groq", _call_groq_or_none),
-        ("ollama", _call_ollama_or_none),
         ("huggingface", _call_hf_or_none),
     ):
         try:
@@ -363,7 +333,7 @@ def parse_resume_llm(req: ParseResumeRequest) -> Tuple[ParsedResume, str]:
     raw_bytes = decode_base64(req.file_content)
     text = extract_text(req.mime_type, raw_bytes)
 
-    # Return error if no text extracted
+    
     if not text or len(text.strip()) < 10:
         raise ValueError("Failed to extract text from document. File may be corrupted, password-protected, or in an unsupported format.")
 

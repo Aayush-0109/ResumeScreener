@@ -2,7 +2,7 @@ from fastapi import APIRouter, Body
 from src.models.responses import SuccessResponse
 from src.models.matching import BatchMatchRequest
 from src.services.matching_service import score_batch
-from src.services.matching_insights import make_gemini_insight_fn
+from src.services.matching_insights import make_rule_based_insight_fn
 
 router = APIRouter(prefix="/match", tags=["match"])
 
@@ -14,7 +14,7 @@ def match_batch(req: BatchMatchRequest = Body(...)):
     insightsTopK = int(opts.get("insightsTopK") or 0)
 
     try:
-        insight_fn = make_gemini_insight_fn()
+        insight_fn = make_rule_based_insight_fn()
     except Exception:
         insight_fn = None
     

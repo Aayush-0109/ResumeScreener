@@ -14,7 +14,7 @@ class ResumeInput(BaseModel):
     experience: Optional[int] = None
     education: Optional[str] = None
     summary: Optional[str] = None
-    name: Optional[str] = None  # Add these fields
+    name: Optional[str] = None  
     email: Optional[str] = None
 
 class Weights(BaseModel):
@@ -28,7 +28,7 @@ class Weights(BaseModel):
 class BatchMatchRequest(BaseModel):
     job: JobInput
     resumes: List[ResumeInput]
-    options: Optional[Dict[str, Any]] = None  # { topN, weights, insightsTopK }
+    options: Optional[Dict[str, Any]] = None 
 
 class MatchScores(BaseModel):
     overallMatchScore: Optional[float] = None
@@ -42,7 +42,7 @@ class MatchScores(BaseModel):
     missingSkills: List[str] = []
     experienceGap: Optional[int] = None
     educationMatch: Optional[str] = None
-    aiMatchInsights: Optional[str] = None  # short rationale
+    aiMatchInsights: Optional[str] = None  
 
 class BatchMatchResponseItem(BaseModel):
     resumeId: str
