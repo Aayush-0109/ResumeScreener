@@ -11,6 +11,13 @@ enum UserRole {
   USER
   ADMIN
 }
+enum JobQueueStatus {
+ PENDING
+ PROCESSING
+ COMPLETED
+ FAILED
+ CANCELLED
+}
 
 enum ParseStatus {
   PENDING
@@ -32,6 +39,7 @@ model User {
 
   resumes Resume[]
   jobs    Job[]
+  jobQueues JobQueue[]
 
   @@index([role])
   @@index([createdAt])
@@ -90,6 +98,7 @@ model Job {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   matches JobMatch[]
+  jobQueues JobQueue[]
 
   @@index([title])
   @@index([skills])
@@ -133,4 +142,30 @@ model JobMatch {
   @@index([experienceMatchScore])
   @@index([matchedAt])
   @@map("job_matches")
+}
+
+model JobQueue {
+  id String  @id @default(cuid())
+  jobId String 
+  userId String
+  status JobQueueStatus @default(PENDING)
+
+  topN Int?
+  weights Json?
+  insightTopK Int?  @default(5)
+
+  createdAt DateTime @default(now())
+  startedAt DateTime?
+  completedAt DateTime?
+
+  resultData Json?
+  errorMessage String?
+
+  progress Int?  @default(0)
+  totalResumes Int?
+  processedResumes Int? @default(0)
+
+  job Job @relation(fields: [jobId],references: [id],onDelete: Cascade)
+  user User @relation(fields: [userId],references: [id],onDelete: Cascade)
+
 }
