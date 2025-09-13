@@ -8,6 +8,7 @@ import cookieParser from "cookie-parser"
 import matchingRoutes from './routes/matching.routes.js';
 import resumeRouter from './routes/resume.routes.js';
 import jobRoutes from './routes/job.routes.js';
+import { authMiddleware } from "./middleware/auth.middleware.js";
 
 const app = express();
 
@@ -22,9 +23,9 @@ app.use(cors());
 
 
 app.use("/api/auth",authRouter)
-app.use('/api/resumes', resumeRouter);
-app.use('/api/jobs', jobRoutes);
-app.use('/api/matches', matchingRoutes);
+app.use('/api/resumes', authMiddleware,resumeRouter);
+app.use('/api/jobs',authMiddleware,jobRoutes);
+app.use('/api/matches', authMiddleware, matchingRoutes);
 
 app.get('/api/health', (req, res) => {
     res.json({

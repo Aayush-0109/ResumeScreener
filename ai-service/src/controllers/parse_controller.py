@@ -8,12 +8,12 @@ router = APIRouter(prefix="/parse", tags=["parse"])
 @router.post("/resume")
 def parse_resume(request: ParseResumeRequest = Body(...)):
     logger.info(f"/parse/resume file={request.file_name} mime={request.mime_type}")
-    parsed, source = parse_resume_llm(request)
+    parsed, metadata = parse_resume_llm(request)
     return {
         "success": True,
         "message": "Parsed",
         "data": {
             "parsed": parsed.model_dump(),
-            "meta": {"source": source}
+            "meta": metadata
         }
     }

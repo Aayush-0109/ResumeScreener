@@ -7,7 +7,7 @@ from typing import Optional, Dict, Any, Tuple
 from src.config.settings import settings
 from src.models.parse import ParseResumeRequest, ParsedResume
 from src.utils.logger import logger
-
+import time
 import tempfile
 import subprocess
 import shutil
@@ -17,7 +17,9 @@ ALLOWED_MIME = {
     "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 }
-
+llm_timeout = settings.llm_timeout
+llm_max_tokens = settings.llm_max_tokens
+llm_provider_order = settings.llm_provider_order
 def decode_base64(content_b64: str) -> bytes:
     try:
         return base64.b64decode(content_b64, validate=True)
@@ -27,6 +29,17 @@ def decode_base64(content_b64: str) -> bytes:
 def validate_mime(mime_type: str) -> None:
     if mime_type not in ALLOWED_MIME:
         raise ValueError(f"Unsupported mime type: {mime_type}")
+
+
+def _truncate_text(text:str , max_length:int = 10000)->str:
+    if len(text) <= max_length:
+        return text
+
+    truncated = text[:max_length]
+    last_space = truncated.rfind(" ")
+    if(last_space>max_length*0.8) :
+        return truncated[:last_space] + "..."
+    return truncated + "..."
 
 def _extract_text_from_pdf(raw_bytes: bytes) -> str:
     from io import BytesIO
@@ -240,7 +253,10 @@ def _call_gemini_or_none(text: str) -> Optional[Dict[str, Any]]:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(
             model_name="gemini-1.5-flash",
-            generation_config={"temperature": 0.1, "response_mime_type": "application/json"}
+            generation_config={"temperature": 0.1,
+             "response_mime_type": "application/json",
+             "max_output_tokens" : llm_max_tokens
+            }
         )
         resp = model.generate_content(_prompt(text))
         content = getattr(resp, "text", None) or "{}"
@@ -270,6 +286,9 @@ def _call_groq_or_none(text: str) -> Optional[Dict[str, Any]]:
                 {"role": "user", "content": _prompt(text)},
             ],
             temperature=0.1,
+            max_tokens= llm_max_tokens,
+            timeout = llm_timeout
+            
         )
         content = resp.choices[0].message.content or "{}"
         try:
@@ -315,17 +334,31 @@ def _call_hf_or_none(text: str) -> Optional[Dict[str, Any]]:
         return None
 
 def _call_any_llm_or_none(text: str) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
-    for name, fn in (
-        ("gemini", _call_gemini_or_none),
-        ("groq", _call_groq_or_none),
-        ("huggingface", _call_hf_or_none),
-    ):
-        try:
-            obj = fn(text)
-            if obj is not None:
-                return obj, name
-        except Exception as e:
-            continue
+    for name in llm_provider_order:
+        if name == 'gemini' :
+            for attempt in range(3):
+                result = _call_gemini_or_none(text)
+                if result is not None:
+                    break;
+                elif attempt <2:
+                    time.sleep(1*(2**attempt)) 
+        elif name == "groq":
+            for attempt in range(3):
+                result = _call_groq_or_none(text)
+                if result is not None:
+                    break;
+                elif attempt <2:
+                    time.sleep(1*(2**attempt)) 
+        elif name == "huggingface":
+            for attempt in range(3):
+                result = _call_hf_or_none(text)
+                if result is not None:
+                    break;
+                elif attempt <2:
+                    time.sleep(1*(2**attempt)) 
+
+        if result is not None:
+            return result,name
     return None, None
 
 def parse_resume_llm(req: ParseResumeRequest) -> Tuple[ParsedResume, str]:
@@ -333,17 +366,34 @@ def parse_resume_llm(req: ParseResumeRequest) -> Tuple[ParsedResume, str]:
     raw_bytes = decode_base64(req.file_content)
     text = extract_text(req.mime_type, raw_bytes)
 
+    metadata = {
+        "original_length": len(text),
+        "was_truncated": False,
+        "providers_tried": [],
+        "total_attempts": 0,
+        "successful_provider": None,
+        "processing_time": 0
+    }
+
     
     if not text or len(text.strip()) < 10:
         raise ValueError("Failed to extract text from document. File may be corrupted, password-protected, or in an unsupported format.")
 
+    original_length = len(text)
+    text = _truncate_text(text)
+    metadata["was_truncated"] = len(text) != original_length
+    
+    start_time = time.time()
     llm_obj, provider = _call_any_llm_or_none(text or "")
+    metadata["processing_time"] = time.time() - start_time
     if llm_obj is not None:
         norm = _normalize(llm_obj)
-        source = provider or "unknown"
+        metadata["successful_provider"] = provider
     else:
         norm = light_regex_parse(text or "")
         source = "regex"
+        metadata["successful_provider"]= "regex"
+        metadata["fallback_used"] = True
 
     return ParsedResume(
         name=norm["name"],
@@ -352,4 +402,4 @@ def parse_resume_llm(req: ParseResumeRequest) -> Tuple[ParsedResume, str]:
         skills=norm["skills"],
         experience=norm["experience"],
         education=norm["education"]
-    ), source
+    ),  metadata

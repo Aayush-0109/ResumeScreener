@@ -19,13 +19,20 @@ async function parseViaAiService(fileBuffer: Buffer, fileName: string, mimeType:
         name: string | null; email: string | null; phone: string | null;
         skills: string[]; experience: number | null; education: string | null;
       };
-      meta?: { source?: string | null };
+      meta?: { 
+        successful_provider ? : string,
+    processing_time ?: number,
+    original_length?: number,
+    was_truncated?: boolean,
+    providers_tried?: string[],
+    fallback_used?: boolean
+       };
     };
   };
-  return { parsed: j.data?.parsed, source: j.data?.meta?.source ?? null };
+  return { parsed: j.data?.parsed, source: j.data?.meta?.successful_provider ?? null };
 }
 
- class ResumeService implements IResumeService {
+class ResumeService implements IResumeService {
   async uploadMany(files: UploadInput[], userId: string): Promise<UploadManyResult> {
     if (!files?.length) throw new ValidationError('No files provided');
 

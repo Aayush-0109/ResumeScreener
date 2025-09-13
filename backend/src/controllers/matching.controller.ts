@@ -5,11 +5,11 @@ import service from '../services/matching.service.js';
 import redisService from '../services/redis.service.js';
 
 export const matchForJob = asyncHandler(async (req: Request, res: Response) => {
-  const userId = (req as any).user.id;
+  const userId = req.user.id!;
   const { jobId } = req.params;
-  const topN = req.query.topN ? Number(req.query.topN) : undefined;
+  const topN = req.validatedQuery?.topN ;
   const weights = req.body?.weights;
-  await service.clearMatches(jobId,userId);
+  await service.clearMatches(jobId, userId);
   const result = await service.matchJobForUserViaAI(jobId, userId, { topN, weights, insightsTopK: 5 });
 
   await redisService.delPattern(`${userId}/GET//match/${jobId}/*`)
