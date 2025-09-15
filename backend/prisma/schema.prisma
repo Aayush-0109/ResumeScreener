@@ -145,27 +145,26 @@ model JobMatch {
 }
 
 model JobQueue {
-  id String  @id @default(cuid())
-  jobId String 
-  userId String
-  status JobQueueStatus @default(PENDING)
+ id            String          @id @default(cuid())
+  jobId         String
+  userId        String
+  status        JobQueueStatus  @default(PENDING)
+  topN          Int?
+  weights       Json?
+  insightsTopK  Int?            @default(5)
+  createdAt     DateTime        @default(now())
+  startedAt     DateTime?
+  completedAt   DateTime?
+  resultData    Json?
+  errorMessage  String?
 
-  topN Int?
-  weights Json?
-  insightTopK Int?  @default(5)
+  job   Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user  User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  startedAt DateTime?
-  completedAt DateTime?
-
-  resultData Json?
-  errorMessage String?
-
-  progress Int?  @default(0)
-  totalResumes Int?
-  processedResumes Int? @default(0)
-
-  job Job @relation(fields: [jobId],references: [id],onDelete: Cascade)
-  user User @relation(fields: [userId],references: [id],onDelete: Cascade)
+  @@index([status])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([jobId])
+  @@map("job_queue")
 
 }

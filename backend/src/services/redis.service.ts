@@ -112,47 +112,7 @@ class RedisService {
       return 0;
     }
   }
-  async setJobStatus(queueId: string, status: string, ttl: number = 3600): Promise<void> {
-    try {
-      const key = `job:${queueId}:status`;
-      await this.redis.setex(key, ttl, status);
-      console.log(`Set job status: ${queueId} -> ${status}`);
-    } catch (error: any) {
-      console.log(`Set job status error: ${error.message}`);
-    }
-  }
-
-  async getJobStatus(queueId: string): Promise<string | null> {
-    try {
-      const key = `job:${queueId}:status`;
-      const status = await this.redis.get(key);
-      console.log(`Get job status: ${queueId} -> ${status}`);
-      return status;
-    } catch (error: any) {
-      console.log(`Get job status error: ${error.message}`);
-      return null;
-    }
-  }
-  async setJobProgress(queueId: string, progress: number, ttl: number = 3600): Promise<void> {
-    try {
-      const key = `job:${queueId}:progress`;
-      await this.redis.setex(key, ttl, progress.toString());
-      console.log(`Set job progress: ${queueId} -> ${progress}%`);
-    } catch (error: any) {
-      console.log(`Set job progress error: ${error.message}`);
-    }
-  }
-
-  async getJobProgress(queueId: string): Promise<number | null> {
-    try {
-      const key = `job:${queueId}:progress`;
-      const progress = await this.redis.get(key);
-      return progress ? parseInt(progress) : null;
-    } catch (error: any) {
-      console.log(`Get job progress error: ${error.message}`);
-      return null;
-    }
-  }
+  
   async setWorkerLock(workerId: string, queueId: string, ttl: number = 300): Promise<boolean> {
     try {
       const key = `lock:worker:${workerId}`;

@@ -12,7 +12,8 @@
     "start": "node dist/index.js",
     "prisma": "prisma",
     "migrate:deploy": "prisma migrate deploy",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "worker:dev": "tsx src/workers/matching.worker.ts"
   },
   "dependencies": {
     "@cloudinary-util/types": "^1.6.0",
