@@ -3,24 +3,25 @@ import dotenv from "dotenv"
 import app from "./app.js";
 import { connectDB } from "./config/db.js";
 import { redisClient } from "./config/redis.js";
+import { validateEnv } from "./config/env.js";
+import { validateConnections } from "./config/health.js";
 
 dotenv.config();
-const PORT = process.env.PORT || 3000;
 
-connectDB().then(
-    () => {
-        redisClient.connect().then(() => {
-            console.log("Redis connection successful")
-            app.listen(PORT, () => {
-                console.log(`🚀 Server running on port ${PORT}`);
-            })
-        }).catch((err) => {
-            console.log(err);
-            process.exit(1);
-        })
 
-    }
-).catch((err) => {
-    console.log(err);
+const startServer = async() =>{
+    const env = validateEnv();
+    console.log(`🌍 Environment: ${env.NODE_ENV}`);
+    await connectDB();
+    await redisClient.connect();
+    await validateConnections(env);
+
+    app.listen(env.PORT , ()=>{
+        console.log(`🚀 Server running on port ${env.PORT}`);
+    })
+}
+
+startServer().catch((err: Error) => {
+    console.error('💥 Startup failed:', err.message);
     process.exit(1);
-})
+  });

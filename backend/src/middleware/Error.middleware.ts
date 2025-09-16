@@ -18,7 +18,7 @@ export const errorMiddleware = (error: Error | ApiError, req: Request, res: Resp
             errors: error.errors,
             isOperational: error.isOperational,
             correlationId,
-            timeStamp: new Date().toISOString()
+            timestamp: new Date().toISOString() 
         })
     }
     else {

@@ -21,6 +21,3 @@ export const listJobsQuery = z.object({
   sort: z.string().optional()
 });
 
-export const jobIdParams = z.object({
-  id: z.cuid()
-});

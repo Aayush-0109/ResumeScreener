@@ -11,7 +11,7 @@ import matchingService from "../services/matching.service.js";
 
 export const uploadMany = asyncHandler(async (req: Request, res: Response) => {
   const files = (req.files as Express.Multer.File[]) || [];
-  const userId = (req as any).user.id;
+  const userId = req.user.id!;
 
   if (!files.length) throw new ValidationError("No files provided");
 
@@ -27,24 +27,24 @@ export const uploadMany = asyncHandler(async (req: Request, res: Response) => {
   return res.status(201).json(new ApiResponse(201, 'Uploaded', result));
 })
 export const listMyResumes = asyncHandler(async (req: Request, res: Response) => {
-  const userId = (req as any).user.id;
+  const userId = req .user.id!;
   const query = req.query as unknown as ListMyResumesQuery;
   const result = await service.listMyResumes(userId, query);
   return res.json(new ApiResponse(200, 'Resumes retrieved', result));
 });
 
-export const removeOne = async (req: Request, res: Response) => {
-  const userId = (req as any).user.id;
+export const removeOne = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req .user.id!;
   const { id } = req.params;
   const result = await service.deleteById(id, userId);
   await redisService.delPattern(`${userId}/GET//resume/my*`)
   await matchingService.clearAllUserMatches(userId);
   await redisService.delPattern(`${userId}/GET//match*`)
   return res.json(new ApiResponse(200, 'Deleted', result));
-};
+});
 
 export const clearMyResumes = asyncHandler(async (req: Request, res: Response) => {
-  const userId = (req as any).user.id;
+  const userId = req.user.id!;
   const result = await service.clearUserResumes(userId);
   await redisService.delPattern(`${userId}/GET//resume/my*`)
   await matchingService.clearAllUserMatches(userId);

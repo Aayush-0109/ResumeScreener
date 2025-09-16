@@ -1,86 +1,73 @@
 ## MVP Remaining Tasks (Backend + AI Service)
 
-Scope: Excludes advanced search and health checks/monitoring/performance tests. Single role only, no score history, cache already applied.
+**Current Status**: Async batch processing ✅, Validation hardening ✅, Environment validation ✅
 
-### Backend (Node)
-- [ ] Implement async batch processing with a queue
-  - Enqueue large match jobs; poll status; cancel job
-  - Endpoints: POST enqueue, GET status, DELETE cancel
-  - Worker consumes jobs and persists latest results
+### Backend (Node) - PENDING
 
-- [ ] Export endpoints (streamed)
-  - JSON/CSV export for matched results (no in-memory buffering)
-  - Optional PDF summary for top-N
+- [ ] **Export endpoints (streamed)**
+  - GET /match/:jobId/exports?format=csv|json
+  - Stream large datasets without memory buffering
+  - Proper headers and backpressure handling
 
-- [ ] Optional webhooks for match completion
-  - Register/list/remove webhook with HMAC secret
-  - Deliver events with retries and signature header
+- [ ] **Production logging & monitoring**
+  - Structured logging with Winston
+  - Request/response logging with correlation IDs
+  - Enhanced health checks with dependency validation
+  - Error tracking and metrics collection
 
-- [ ] Validation hardening
-  - Strict zod schemas for weights (0–1), topN limits, IDs
-  - File size limits, mime validation already enforced through upload layer
-  - Consistent error shape with correlation ID
+- [ ] **Graceful shutdown handling**
+  - SIGTERM handlers for API server
+  - Worker job completion before shutdown
+  - Connection cleanup and resource disposal
 
-- [ ] Idempotency and retries
-  - Idempotency key header on match requests to prevent duplicate work
-  - Safe replays in queue/worker
+### AI Service (FastAPI) - PENDING
 
-### AI Service (FastAPI)
-- [ ] Skill expertise levels and confidence
-  - Extend parse to label skills: beginner/intermediate/advanced/expert
-  - Return confidence per skill and normalize aliases
+- [ ] **LLM resilience finalization**
+  - Complete provider fallback metadata
+  - Deterministic mode (temperature=0) option
+  - Processing metadata in responses (provider, timing, truncation)
 
-- [ ] Additional lightweight scores (behind flags)
-  - Cultural fit: heuristic/LLM-based tone/keywords
-  - Bias risk: detect sensitive signals and return a risk note
-  - Predictive success (rule-of-thumb): combine matched skills, exp gap, edu
-  - Configurable via request flags; defaults off
+- [ ] **Input pipeline safeguards**
+  - Stricter MIME/size validation
+  - Clear error messages for corrupt/password PDFs
+  - Document limitations when text extraction fails
 
-- [ ] LLM resilience and cost control
-  - Configurable provider order (gemini → groq → hf → regex)
-  - Retries with backoff, input truncation for long resumes
-  - Return metadata: provider used, truncation, timing
+### Production Readiness - PENDING
 
-- [ ] Determinism options
-  - Temperature=0 path for consistent scores
-  - Include prompt/version metadata in responses
+- [ ] **Performance optimization**
+  - Database query optimization
+  - Connection pooling configuration
+  - Response caching improvements
 
-- [ ] Input pipeline safeguards
-  - Stricter MIME/size caps; clear errors for corrupt/password PDFs
-  - Document OCR fallback limitations (if text extraction fails)
+- [ ] **Docker production builds**
+  - Multi-stage builds for smaller images
+  - Production environment configuration
+  - Health check endpoints in containers
 
-### Minimal Data Model Adjustments (no history)
-- [ ] Persist latest match results per job (optional)
-  - Columns/JSON field for scores (skills/experience/education/technical/cultural/bias/predictive)
-  - Store weights, provider, and brief insight text
+- [ ] **End-to-end testing**
+  - Complete user flow validation
+  - Load testing with realistic data volumes
+  - Error recovery testing
 
-- [ ] Webhooks (optional)
-  - Table for webhook endpoints and secrets
+### Acceptance Criteria
 
-### APIs and Contracts
-- [ ] Extend match request options
-  - flags: { includeCultural, includeBias, includePredictive }
-  - weights validation/normalization; topN cap
+- [ ] **Exports**: 10k+ matches stream successfully without timeout/memory issues
+- [ ] **Logging**: All requests tracked with correlation IDs, structured logs
+- [ ] **Shutdown**: Services stop gracefully, workers complete current jobs
+- [ ] **LLM**: Provider failures don't break flow, metadata returned
+- [ ] **Performance**: Response times <500ms p95, stable memory usage
+- [ ] **Reliability**: <1% error rate, auto-recovery from failures
 
-- [ ] Exports API
-  - POST /exports/matches → streamed CSV/JSON
+### Out of Scope (Post-MVP)
 
-- [ ] Webhooks management (if enabled)
-  - CRUD endpoints for webhook registration
-
-### DevOps (limited scope)
-- [ ] Environment validation on startup
-  - Fail fast when required API keys/vars are missing
-
-- [ ] CI/CD basics
-  - Lint, typecheck, and unit/integration tests for critical paths
-  - Tagged builds produce images and run DB migrations
-
-### Acceptance Hints
-- Async batch: 500+ resumes processed without request timeout; status transitions observable.
-- Exports: Large responses stream successfully; memory stays bounded.
-- Flags and weights: Requests with invalid values are rejected; normalized weights sum to 1.
-- LLM fallback: Provider failures don’t break flow; response includes provider metadata.
-- Determinism: Temperature=0 runs yield consistent outputs for identical inputs.
+- Advanced search functionality
+- Score history tracking
+- Multiple user roles
+- Webhooks for match completion
+- Skill expertise levels
+- Cultural fit scoring
+- Idempotency keys
+- CI/CD pipeline
+- Advanced monitoring (Prometheus/Grafana)
 
 
