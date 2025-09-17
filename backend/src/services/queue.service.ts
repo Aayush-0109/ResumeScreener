@@ -3,6 +3,7 @@ import { prisma } from '../config/db.js';
 import { JobQueueStatus } from '@prisma/client';
 import redisService from './redis.service.js';
 import { Prisma } from '@prisma/client';
+import { logger } from '../utils/logger.js';
 
 const QUEUE_PENDING = 'queue:pending';
 
@@ -24,19 +25,36 @@ export interface JobStatus {
 class QueueService {
 
     async enqueueJob(jobId: string, userId: string, opts: QueueJobOptions = {}): Promise<string> {
+      
+        logger.info('Enqueuing job', {
+            jobId,
+            userId,
+            options: opts,
+            service: 'queue'
+        });
+
         const queueJob = await prisma.jobQueue.create({
             data: {
                 jobId,
                 userId,
                 status: 'PENDING',
-                topN: opts.topN ?? undefined,
-                insightsTopK: opts.insightsTopK ?? 5,
-                weights: opts.weights as Prisma.InputJsonValue ?? Prisma.DbNull
+                topN: opts.topN ?? null,
+                weights: opts.weights as Prisma.InputJsonValue ?? null,
+                insightsTopK: opts.insightsTopK ?? 5
             },
             select: { id: true }
         });
 
         await redisService.lpush(QUEUE_PENDING, queueJob.id);
+
+        
+        logger.info('Job enqueued successfully', {
+            queueId: queueJob.id,
+            jobId,
+            userId,
+            service: 'queue'
+        });
+
         return queueJob.id;
     }
 
@@ -56,22 +74,38 @@ class QueueService {
     }
 
     async cancelJob(queueId: string): Promise<boolean> {
+      
+        logger.info('Cancelling job', {
+            queueId,
+            service: 'queue'
+        });
+
         const updated = await prisma.jobQueue.updateMany({
             where: { id: queueId, status: { in: ['PENDING', 'PROCESSING'] } },
             data: { status: 'CANCELLED', completedAt: new Date() }
         });
 
         await redisService.lrem(QUEUE_PENDING, 0, queueId);
-        return updated.count > 0;
+
+        const success = updated.count > 0;
+
+        
+        logger.info('Job cancellation completed', {
+            queueId,
+            success,
+            service: 'queue'
+        });
+
+        return success;
     }
 
-    
+
     async getNextJobId(timeoutSeconds: number = 5): Promise<string | null> {
         const id = await redisService.brpop(QUEUE_PENDING, timeoutSeconds);
         return id;
     }
 
-   
+
     async markProcessing(queueId: string): Promise<void> {
         await prisma.jobQueue.update({
             where: { id: queueId },
@@ -79,7 +113,7 @@ class QueueService {
         });
     }
 
-    
+
     async markCompleted(queueId: string, resultData: any): Promise<void> {
         await prisma.jobQueue.update({
             where: { id: queueId },
@@ -91,7 +125,7 @@ class QueueService {
         });
     }
 
-    
+
     async markFailed(queueId: string, message: string): Promise<void> {
         await prisma.jobQueue.update({
             where: { id: queueId },

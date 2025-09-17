@@ -1,6 +1,7 @@
 import { prisma } from '../config/db.js';
 import { ParseStatus } from '@prisma/client';
 import type { SearchQuery } from '../types/general.types.js';
+import { logger } from '../utils/logger.js';
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
@@ -14,14 +15,39 @@ type AiBatchMatchResp = { data?: { topN: number; matched: Array<{ resumeId: stri
 class MatchingService {
 
   async matchJobForUserViaAI(jobId: string, userId: string, opts?: { topN?: number; weights?: Record<string, number>; insightsTopK?: number }) {
+
+    logger.info('AI matching started', {
+      jobId,
+      userId,
+      options: opts,
+      service: 'matching'
+    });
+
     const job = await prisma.job.findFirst({ where: { id: jobId, userId } });
-    if (!job) return { topN: opts?.topN ?? 10, matched: [] };
+    if (!job) {
+      logger.warn('Job not found for matching', { jobId, userId });
+      return { topN: opts?.topN ?? 10, matched: [] };
+    }
 
     const resumes = await prisma.resume.findMany({
       where: { userId, parseStatus: ParseStatus.DONE },
       select: { id: true, skills: true, experience: true, education: true, name: true, email: true }
     });
-    if (!resumes.length) return { topN: opts?.topN ?? 10, matched: [] };
+
+    if (!resumes.length) {
+      logger.warn('No resumes found for matching', { jobId, userId });
+      return { topN: opts?.topN ?? 10, matched: [] };
+    }
+
+    logger.info('Calling AI service for matching', {
+      jobId,
+      userId,
+      resumeCount: resumes.length,
+      aiServiceUrl: AI_SERVICE_URL,
+      service: 'matching'
+    });
+
+    const startTime = Date.now();
 
     const body: AiBatchMatchReq = {
       job: {
@@ -35,11 +61,36 @@ class MatchingService {
       options: { topN: opts?.topN, weights: opts?.weights, insightsTopK: opts?.insightsTopK ?? 0 }
     };
 
-    const r = await fetch(`${AI_SERVICE_URL}/match/batch`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
-    if (!r.ok) return { topN: opts?.topN ?? 10, matched: [] };
+    const r = await fetch(`${AI_SERVICE_URL}/match/batch`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    const duration = Date.now() - startTime;
+
+    if (!r.ok) {
+      logger.error('AI matching service failed', {
+        jobId,
+        userId,
+        statusCode: r.status,
+        duration,
+        service: 'matching'
+      });
+      return { topN: opts?.topN ?? 10, matched: [] };
+    }
+
     const j = (await r.json()) as AiBatchMatchResp;
     const matched = j.data?.matched || [];
-    const topN = j.data?.topN ?? (opts?.topN ?? 10);
+
+
+    logger.info('AI matching completed', {
+      jobId,
+      userId,
+      matchCount: matched.length,
+      duration,
+      service: 'matching'
+    });
 
     await Promise.all(matched.map(m =>
       prisma.jobMatch.upsert({
@@ -75,6 +126,8 @@ class MatchingService {
         }
       })
     ));
+
+    const topN = opts?.topN ?? 10;
 
     const data = await prisma.jobMatch.findMany({
       where: { jobId },
