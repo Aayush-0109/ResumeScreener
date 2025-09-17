@@ -13,12 +13,14 @@
     "prisma": "prisma",
     "migrate:deploy": "prisma migrate deploy",
     "postinstall": "prisma generate",
-    "worker:dev": "tsx src/workers/matching.worker.ts"
+    "worker:dev": "tsx src/workers/matching.worker.ts",
+    "test": "tsx test-log.ts"
   },
   "dependencies": {
     "@cloudinary-util/types": "^1.6.0",
     "@elastic/elasticsearch": "^9.1.1",
     "@types/ioredis": "^4.28.10",
+    "@types/winston": "^2.4.4",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.7.0",
     "cookie-parser": "^1.4.7",
@@ -29,9 +31,9 @@
     "helmet": "^8.1.0",
     "ioredis": "^5.7.0",
     "jsonwebtoken": "^9.0.2",
-    "morgan": "^1.10.1",
     "multer": "^2.0.2",
     "prisma": "^6.15.0",
+    "winston": "^3.17.0",
     "zod": "^4.1.5"
   },
   "devDependencies": {

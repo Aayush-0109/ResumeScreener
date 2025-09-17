@@ -5,12 +5,32 @@ import { asyncHandler } from '../utils/AsyncHandler.js';
 import { SearchQuery } from '../types/general.types.js';
 import matchingService from '../services/matching.service.js';
 import redisService from '../services/redis.service.js';
+import { logger } from '../utils/logger.js';
 const service = new JobService();
 
 export const createJob = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user.id!;
+
+ 
+  logger.info('Job creation started', {
+    userId,
+    title: req.body.title,
+    skillsCount: req.body.skills?.length || 0,
+    correlationId: req.correlationId
+  });
+
   const job = await service.create(userId, req.body);
-  await redisService.delPattern(`${userId}/GET//job*`)
+
+  await redisService.delPattern(`${userId}/GET//job*`);
+
+  
+  logger.info('Job creation completed', {
+    userId,
+    jobId: job.id,
+    title: job.title,
+    correlationId: req.correlationId
+  });
+
   res.status(201).json(new ApiResponse(201, 'Job created', job));
 });
 

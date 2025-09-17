@@ -1,4 +1,4 @@
-import  service  from "../services/resume.service.js";
+import service from "../services/resume.service.js";
 import { ValidationError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
@@ -6,7 +6,7 @@ import { Request, Response } from 'express'
 import { ListMyResumesQuery } from '../types/resume.types.js';
 import redisService from "../services/redis.service.js";
 import matchingService from "../services/matching.service.js";
-
+import { logger } from '../utils/logger.js';
 
 
 export const uploadMany = asyncHandler(async (req: Request, res: Response) => {
@@ -15,26 +15,53 @@ export const uploadMany = asyncHandler(async (req: Request, res: Response) => {
 
   if (!files.length) throw new ValidationError("No files provided");
 
+  // 📊 Log upload start
+  logger.info('Resume upload started', {
+    userId,
+    fileCount: files.length,
+    totalSize: files.reduce((sum, f) => sum + f.size, 0),
+    fileNames: files.map(f => f.originalname),
+    correlationId: req.correlationId
+  });
+
   const inputs = files.map(f => ({
     buffer: f.buffer,
     mimetype: f.mimetype,
     originalname: f.originalname
-  }))
+  }));
+
   const result = await service.uploadMany(inputs, userId);
-  await redisService.delPattern(`${userId}/GET//resume/my*`)
+
+  // 📊 Log cache invalidation
+  logger.info('Invalidating user cache', {
+    userId,
+    patterns: [`${userId}/GET//resume/my*`, `${userId}/GET//match*`],
+    correlationId: req.correlationId
+  });
+
+  await redisService.delPattern(`${userId}/GET//resume/my*`);
   await matchingService.clearAllUserMatches(userId);
-  await redisService.delPattern(`${userId}/GET//match*`)
+  await redisService.delPattern(`${userId}/GET//match*`);
+
+  // 📊 Log upload completion
+  logger.info('Resume upload completed', {
+    userId,
+    uploadedCount: result.createdCount || 0,
+    failedCount: result.failed?.length || 0,
+    correlationId: req.correlationId
+  });
+
   return res.status(201).json(new ApiResponse(201, 'Uploaded', result));
-})
+});
 export const listMyResumes = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req .user.id!;
+  const userId = req.user.id!;
   const query = req.query as unknown as ListMyResumesQuery;
   const result = await service.listMyResumes(userId, query);
   return res.json(new ApiResponse(200, 'Resumes retrieved', result));
 });
 
 export const removeOne = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req .user.id!;
+  const userId = req.user.id!;
   const { id } = req.params;
   const result = await service.deleteById(id, userId);
   await redisService.delPattern(`${userId}/GET//resume/my*`)

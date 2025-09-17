@@ -361,7 +361,7 @@ def _call_any_llm_or_none(text: str) -> Tuple[Optional[Dict[str, Any]], Optional
             return result,name
     return None, None
 
-def parse_resume_llm(req: ParseResumeRequest) -> Tuple[ParsedResume, str]:
+def parse_resume_llm(req: ParseResumeRequest) -> Tuple[ParsedResume, Dict[str, Any]]:
     validate_mime(req.mime_type)
     raw_bytes = decode_base64(req.file_content)
     text = extract_text(req.mime_type, raw_bytes)
@@ -391,7 +391,6 @@ def parse_resume_llm(req: ParseResumeRequest) -> Tuple[ParsedResume, str]:
         metadata["successful_provider"] = provider
     else:
         norm = light_regex_parse(text or "")
-        source = "regex"
         metadata["successful_provider"]= "regex"
         metadata["fallback_used"] = True
 

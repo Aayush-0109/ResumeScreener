@@ -2,34 +2,47 @@ import { prisma } from '../config/db.js';
 import { IResumeService, ListMyResumesQuery, ListMyResumesResult, PersistedResume, UploadInput, UploadManyResult } from '../types/resume.types.js';
 import { ForbiddenError, NotFoundError, ValidationError } from '../utils/ApiError.js';
 import { ParseStatus } from '@prisma/client';
+import { logger } from '../utils/logger.js';
+import type { AIParseResponse } from '../types/ai.types.js';
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
-async function parseViaAiService(fileBuffer: Buffer, fileName: string, mimeType: string) {
+async function parseViaAiService(fileBuffer: Buffer, fileName: string, mimeType: string): Promise<AIParseResponse> {
   const b64 = fileBuffer.toString('base64');
+
+  logger.info('AI service call started', {
+    fileName,
+    mimeType,
+    fileSize: fileBuffer.length,
+    service: 'parse-resume'
+  });
+  const startTime = Date.now();
+
   const r = await fetch(`${AI_SERVICE_URL}/parse/resume`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ file_content: b64, file_name: fileName, mime_type: mimeType })
   });
-  if (!r.ok) throw new Error(`ai_parse_failed: ${r.status}`);
-  const j = await r.json() as {
-    data?: {
-      parsed?: {
-        name: string | null; email: string | null; phone: string | null;
-        skills: string[]; experience: number | null; education: string | null;
-      };
-      meta?: { 
-        successful_provider ? : string,
-    processing_time ?: number,
-    original_length?: number,
-    was_truncated?: boolean,
-    providers_tried?: string[],
-    fallback_used?: boolean
-       };
-    };
-  };
-  return { parsed: j.data?.parsed, source: j.data?.meta?.successful_provider ?? null };
+  const duration = Date.now() - startTime;
+
+  if (!r.ok) {
+    logger.error('AI service call failed', {
+      fileName,
+      statusCode: r.status,
+      duration,
+      service: 'parse-resume'
+    });
+    throw new Error(`ai_parse_failed: ${r.status}`);
+  }
+  const response = await r.json() as AIParseResponse;
+  logger.info('AI service call completed', {
+    fileName,
+    duration,
+    provider: response.data?.meta?.successful_provider,
+    wasSuccessful: response.success,
+    service: 'parse-resume'
+  });
+  return response
 }
 
 class ResumeService implements IResumeService {
@@ -40,7 +53,8 @@ class ResumeService implements IResumeService {
 
     for (const file of files) {
       try {
-        const { parsed } = await parseViaAiService(file.buffer, file.originalname, file.mimetype);
+        const aiResponse = await parseViaAiService(file.buffer, file.originalname, file.mimetype);
+        const parsed = aiResponse.data.parsed;
 
         if (parsed) {
           successfulResumes.push({

@@ -10,6 +10,7 @@ import resumeRouter from './routes/resume.routes.js';
 import jobRoutes from './routes/job.routes.js';
 import { authMiddleware } from "./middleware/auth.middleware.js";
 import { correlationMiddleware } from "./middleware/corelation.middleware.js";
+import { requestLogger } from "./middleware/logging.middleware.js";
 
 const app = express();
 
@@ -19,11 +20,11 @@ app.use(express.json({limit : '10mb'}));
 app.use(express.urlencoded({extended : true , limit : '10mb'}))
 app.use(helmet());
 app.use(cors());
-app.use(correlationMiddleware)
-app.use(morgan('combined'));
+app.use(correlationMiddleware);
+app.use(requestLogger);
 
 
-
+  
 app.use("/api/auth",authRouter)
 app.use('/api/resumes', authMiddleware,resumeRouter);
 app.use('/api/jobs',authMiddleware,jobRoutes);

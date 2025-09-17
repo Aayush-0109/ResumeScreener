@@ -101,6 +101,16 @@ app.get('/health', (req, res) => {
 - [ ] **Background jobs** (Bull/Agenda for heavy tasks)
 - [ ] **CDN** for static assets
 
+### Streaming & Backpressure Management
+- [ ] **Backpressure handling** (proper `drain` event handling)
+- [ ] **Stream timeouts** (prevent hanging connections)
+- [ ] **Client disconnect detection** (cleanup resources)
+- [ ] **Stream metrics** (bytes written, backpressure events)
+- [ ] **Concurrent stream limits** (prevent resource exhaustion)
+- [ ] **Memory-efficient streaming** (chunked transfer encoding)
+- [ ] **Database query batching** (prevent large result sets)
+- [ ] **Stream error recovery** (graceful failure handling)
+
 ## 🧪 Testing Strategy
 
 ### Test Types
@@ -203,6 +213,9 @@ app.get('/health', (req, res) => {
 - [ ] **CPU usage** < 70%
 - [ ] **Disk space** monitored
 - [ ] **Log aggregation** working
+- [ ] **Active streaming connections** monitored
+- [ ] **Backpressure events** tracked
+- [ ] **Stream completion rates** > 95%
 
 ### Alerting Thresholds
 ```yaml
@@ -217,6 +230,16 @@ alerts:
     threshold: 85%
   disk_space:
     threshold: 90%
+  streaming:
+    active_streams:
+      threshold: 20
+      duration: 5m
+    backpressure_events:
+      threshold: 100
+      duration: 10m
+    stream_failure_rate:
+      threshold: 5%
+      duration: 5m
 ```
 
 ## 💡 Pro Tips
@@ -236,6 +259,15 @@ alerts:
 - **Plan for scale** - design stateless from the beginning
 - **Automate everything** - deployments, backups, scaling
 - **Test your backups** - untested backups are useless
+
+### Streaming Best Practices
+- **Handle backpressure properly** - always listen for 'drain' events
+- **Set reasonable timeouts** - prevent hanging connections
+- **Monitor stream health** - track completion rates and errors
+- **Limit concurrent streams** - prevent resource exhaustion
+- **Use chunked encoding** - for unknown content length
+- **Implement circuit breakers** - fail fast when system is overloaded
+- **Test with slow clients** - simulate poor network conditions
 
 ---
 
