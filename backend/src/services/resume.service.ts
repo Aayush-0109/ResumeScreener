@@ -8,7 +8,7 @@ import parseQueueService from './parse.queue.service.js';
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
-async function parseViaAiService(fileBuffer: Buffer, fileName: string, mimeType: string): Promise<AIParseResponse> {
+async function parseViaAiService(fileBuffer: Buffer | Uint8Array, fileName: string, mimeType: string): Promise<AIParseResponse> {
   const b64 = fileBuffer.toString('base64');
 
   logger.info('AI service call started', {
@@ -211,6 +211,106 @@ class ResumeService implements IResumeService {
       where: { userId }
     });
     return { deletedCount: result.count };
+  }
+
+  
+  async processParseQueueJob(queueId: string): Promise<void> {
+    logger.info('Processing parse queue job', {
+      queueId,
+      service: 'resume'
+    });
+
+    const job = await parseQueueService.getParseStatus(queueId);
+    if (!job) throw new Error('Parse job not found');
+    if (['CANCELLED', 'COMPLETED', 'FAILED'].includes(job.status)) return;
+
+    await parseQueueService.markParseProcessing(queueId);
+
+    let processedCount = 0;
+
+    // Process each resume
+    for (const resumeId of job.resumeIds) {
+      const resume = await prisma.resume.findUnique({
+        where: { id: resumeId },
+        select: {
+          id: true,
+          fileName: true,
+          mimeType: true,
+          fileBuffer: true,
+          parseStatus: true
+        }
+      });
+
+      if (!resume || resume.parseStatus !== ParseStatus.PENDING) {
+        processedCount++;
+        continue;
+      }
+
+      try {
+        logger.info('Parsing individual resume', {
+          resumeId,
+          fileName: resume.fileName,
+          queueId,
+          service: 'resume'
+        });
+
+        
+        const aiResponse = await parseViaAiService(
+          Buffer.from(resume.fileBuffer!),
+          resume.fileName,
+          resume.mimeType
+        );
+        const parsed = aiResponse.data.parsed;
+        logger.debug("parse check" ,{
+          parsed
+        })
+        await prisma.resume.update({
+          where: { id: resumeId },
+          data: {
+            parseStatus: ParseStatus.DONE,
+            parsedAt: new Date(),
+            name: parsed.name ?? null,
+            email: parsed.email ?? null,
+            phone: parsed.phone ?? null,
+            skills: Array.isArray(parsed.skills) ? parsed.skills : [],
+            experience: (typeof parsed.experience === 'number' && Number.isFinite(parsed.experience)) ? parsed.experience : 0,
+            education: parsed.education ?? null
+          }
+        });
+
+        logger.info('Resume parsed successfully', {
+          resumeId,
+          fileName: resume.fileName,
+          provider: aiResponse.data?.meta?.successful_provider,
+          service: 'resume'
+        });
+
+      } catch (error: any) {
+        logger.error('Resume parsing failed', {
+          resumeId,
+          fileName: resume.fileName,
+          error: error.message,
+          service: 'resume'
+        });
+
+        await prisma.resume.update({
+          where: { id: resumeId },
+          data: { parseStatus: ParseStatus.FAILED }
+        });
+      }
+
+      processedCount++;
+      await parseQueueService.updateParseProgress(queueId, processedCount);
+    }
+
+    await parseQueueService.markParseCompleted(queueId);
+
+    logger.info('Parse queue job completed', {
+      queueId,
+      processedCount,
+      totalCount: job.totalCount,
+      service: 'resume'
+    });
   }
 }
 export default new ResumeService()
