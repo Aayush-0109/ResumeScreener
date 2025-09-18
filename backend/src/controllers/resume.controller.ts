@@ -7,6 +7,8 @@ import { ListMyResumesQuery } from '../types/resume.types.js';
 import redisService from "../services/redis.service.js";
 import matchingService from "../services/matching.service.js";
 import { logger } from '../utils/logger.js';
+import parseQueueService from '../services/parse.queue.service.js';
+import { NotFoundError } from '../utils/ApiError.js';
 
 
 export const uploadMany = asyncHandler(async (req: Request, res: Response) => {
@@ -15,43 +17,38 @@ export const uploadMany = asyncHandler(async (req: Request, res: Response) => {
 
   if (!files.length) throw new ValidationError("No files provided");
 
-  // 📊 Log upload start
   logger.info('Resume upload started', {
     userId,
     fileCount: files.length,
-    totalSize: files.reduce((sum, f) => sum + f.size, 0),
-    fileNames: files.map(f => f.originalname),
     correlationId: req.correlationId
   });
 
-  const inputs = files.map(f => ({
-    buffer: f.buffer,
-    mimetype: f.mimetype,
-    originalname: f.originalname
+  const result = await service.uploadManyAsync(files, userId);
+
+  logger.info('Resume upload queued', {
+    userId,
+    queueId: result.queueId,
+    correlationId: req.correlationId
+  });
+
+  return res.status(201).json(new ApiResponse(201, 'Queued for processing', result));
+});
+
+
+export const getParseStatus = asyncHandler(async (req: Request, res: Response) => {
+  const { queueId } = req.params;
+
+  const job = await parseQueueService.getParseStatus(queueId);
+  if (!job) throw new NotFoundError('Parse job not found');
+
+  const progress = job.totalCount > 0 ? Math.round((job.processedCount / job.totalCount) * 100) : 0;
+
+  return res.json(new ApiResponse(200, 'OK', {
+    status: job.status,
+    progress,
+    processedCount: job.processedCount,
+    totalCount: job.totalCount
   }));
-
-  const result = await service.uploadMany(inputs, userId);
-
-  // 📊 Log cache invalidation
-  logger.info('Invalidating user cache', {
-    userId,
-    patterns: [`${userId}/GET//resume/my*`, `${userId}/GET//match*`],
-    correlationId: req.correlationId
-  });
-
-  await redisService.delPattern(`${userId}/GET//resume/my*`);
-  await matchingService.clearAllUserMatches(userId);
-  await redisService.delPattern(`${userId}/GET//match*`);
-
-  // 📊 Log upload completion
-  logger.info('Resume upload completed', {
-    userId,
-    uploadedCount: result.createdCount || 0,
-    failedCount: result.failed?.length || 0,
-    correlationId: req.correlationId
-  });
-
-  return res.status(201).json(new ApiResponse(201, 'Uploaded', result));
 });
 export const listMyResumes = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user.id!;

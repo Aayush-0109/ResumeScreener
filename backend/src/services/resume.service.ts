@@ -4,6 +4,7 @@ import { ForbiddenError, NotFoundError, ValidationError } from '../utils/ApiErro
 import { ParseStatus } from '@prisma/client';
 import { logger } from '../utils/logger.js';
 import type { AIParseResponse } from '../types/ai.types.js';
+import parseQueueService from './parse.queue.service.js';
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
@@ -46,6 +47,43 @@ async function parseViaAiService(fileBuffer: Buffer, fileName: string, mimeType:
 }
 
 class ResumeService implements IResumeService {
+  async uploadManyAsync(files: UploadInput[], userId: string) {
+    if (!files?.length) throw new ValidationError('No files provided');
+    logger.info('Async resume upload started', {
+      userId,
+      fileCount: files.length,
+      totalSize: files.reduce((sum, f) => sum + f.buffer.length, 0),
+      service: 'resume'
+    });
+    const pendingResumes = files.map(f => ({
+      fileName: f.originalname,
+      fileSize: f.buffer.length,
+      mimeType: f.mimetype,
+      fileBuffer: f.buffer,
+      userId,
+      parseStatus: ParseStatus.PENDING,
+      uploadedAt: new Date()
+    }))
+    const created = await prisma.resume.createManyAndReturn({
+      data: pendingResumes,
+      select: {
+        id: true
+      },
+      skipDuplicates: true
+    });
+    const queueId = await parseQueueService.enqueueParseJob(created.map(c => c.id), userId);
+    logger.info('Resume batch queued for processing', {
+      userId,
+      queueId,
+      resumeCount: created.length,
+      service: 'resume'
+    });
+    return {
+      queueId,
+      resumeCount: created.length,
+      status: 'PENDING'
+    };
+  }
   async uploadMany(files: UploadInput[], userId: string): Promise<UploadManyResult> {
     if (!files?.length) throw new ValidationError('No files provided');
 

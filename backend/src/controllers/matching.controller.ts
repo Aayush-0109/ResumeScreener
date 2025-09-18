@@ -3,7 +3,7 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/AsyncHandler.js';
 import service from '../services/matching.service.js';
 import redisService from '../services/redis.service.js';
-import queueService from '../services/queue.service.js';
+import queueService from '../services/match.queue.service.js';
 import { NotFoundError, ConflictError } from '../utils/ApiError.js';
 import { logger } from '../utils/logger.js';
 
