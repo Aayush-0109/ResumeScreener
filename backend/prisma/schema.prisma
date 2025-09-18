@@ -40,6 +40,7 @@ model User {
   resumes Resume[]
   jobs    Job[]
   jobQueues JobQueue[]
+  parseQueues ParseQueue[]
 
   @@index([role])
   @@index([createdAt])
@@ -167,4 +168,26 @@ model JobQueue {
   @@index([jobId])
   @@map("job_queue")
 
+}
+
+model ParseQueue {
+  id String @id @default(cuid())
+  userID String
+  resumeIds String[]
+  status JobQueueStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  startedAt DateTime?
+  completedAt DateTime?
+
+  processedCount Int @default(0)
+  totalCount Int
+  errorMessage String?
+
+  user User @relation(fields: [userID] , references: [id])
+
+  @@index([status])
+  @@index([userID])
+  @@index([createdAt])
+  @@map("parse_queue")
 }

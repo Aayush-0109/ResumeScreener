@@ -1,4 +1,3 @@
-// backend/src/services/queue.service.ts
 import { prisma } from '../config/db.js';
 import { JobQueueStatus } from '@prisma/client';
 import redisService from './redis.service.js';
@@ -22,7 +21,7 @@ export interface JobStatus {
     errorMessage?: string | null;
 }
 
-class QueueService {
+class MatchQueueService {
 
     async enqueueJob(jobId: string, userId: string, opts: QueueJobOptions = {}): Promise<string> {
       
@@ -30,7 +29,7 @@ class QueueService {
             jobId,
             userId,
             options: opts,
-            service: 'queue'
+            service: 'match queue'
         });
 
         const queueJob = await prisma.jobQueue.create({
@@ -138,4 +137,4 @@ class QueueService {
     }
 }
 
-export default new QueueService();
+export default new MatchQueueService();
