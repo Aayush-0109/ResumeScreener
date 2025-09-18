@@ -30,7 +30,9 @@ export const uploadMany = asyncHandler(async (req: Request, res: Response) => {
     queueId: result.queueId,
     correlationId: req.correlationId
   });
-
+  await redisService.delPattern(`${userId}/GET//resume/my*`)
+  await matchingService.clearAllUserMatches(userId);
+  await redisService.delPattern(`${userId}/GET//match*`)
   return res.status(201).json(new ApiResponse(201, 'Queued for processing', result));
 });
 

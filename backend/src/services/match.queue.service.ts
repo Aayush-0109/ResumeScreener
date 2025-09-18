@@ -14,6 +14,11 @@ export interface QueueJobOptions {
 
 export interface JobStatus {
     id: string;
+    jobId: string;
+    userId: string;
+    topN?: number | null;
+    weights?: any;
+    insightsTopK?: number | null;
     status: JobQueueStatus;
     createdAt: Date;
     startedAt?: Date | null;
@@ -24,7 +29,7 @@ export interface JobStatus {
 class MatchQueueService {
 
     async enqueueJob(jobId: string, userId: string, opts: QueueJobOptions = {}): Promise<string> {
-      
+
         logger.info('Enqueuing job', {
             jobId,
             userId,
@@ -46,7 +51,7 @@ class MatchQueueService {
 
         await redisService.lpush(QUEUE_PENDING, queueJob.id);
 
-        
+
         logger.info('Job enqueued successfully', {
             queueId: queueJob.id,
             jobId,
@@ -58,10 +63,15 @@ class MatchQueueService {
     }
 
     async getJobStatus(queueId: string): Promise<JobStatus | null> {
-        const job = await prisma.jobQueue.findUnique({
+        return await prisma.jobQueue.findUnique({
             where: { id: queueId },
             select: {
                 id: true,
+                jobId: true,
+                userId: true,
+                topN: true,
+                weights: true,
+                insightsTopK: true,
                 status: true,
                 createdAt: true,
                 startedAt: true,
@@ -69,11 +79,10 @@ class MatchQueueService {
                 errorMessage: true
             }
         });
-        return job;
     }
 
     async cancelJob(queueId: string): Promise<boolean> {
-      
+
         logger.info('Cancelling job', {
             queueId,
             service: 'queue'
@@ -88,7 +97,7 @@ class MatchQueueService {
 
         const success = updated.count > 0;
 
-        
+
         logger.info('Job cancellation completed', {
             queueId,
             success,
@@ -111,7 +120,12 @@ class MatchQueueService {
             data: { status: 'PROCESSING', startedAt: new Date() }
         });
     }
-
+    async markPending(queueId: string) {
+        await prisma.jobQueue.update({
+            where: { id: queueId },
+            data: { status: 'PENDING' }
+        });
+    }
 
     async markCompleted(queueId: string, resultData: any): Promise<void> {
         await prisma.jobQueue.update({

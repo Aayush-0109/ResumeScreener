@@ -12,4 +12,4 @@ ENV CHOKIDAR_USEPOLLING=true
 ENV WATCHPACK_POLLING=true 
 
 COPY . .
-CMD ["sh", "-c", "npx prisma migrate deploy  && npm run dev && npm run worker:dev"]
+CMD ["sh", "-c", "npx prisma migrate deploy  && npm run dev"]
