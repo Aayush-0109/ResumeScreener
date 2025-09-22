@@ -14,7 +14,7 @@
     "migrate:deploy": "prisma migrate deploy",
     "postinstall": "prisma generate",
     "worker:dev": "tsx watch ./src/workers/matching.worker.ts",
-    "worker:parse" : "tsx ./src/workers/parsing.worker.ts",
+    "worker:parse": "tsx watch ./src/workers/parsing.worker.ts",
     "start:all": "npm-run-all -p dev worker:match worker:parse"
   },
   "dependencies": {

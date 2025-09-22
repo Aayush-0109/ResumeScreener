@@ -57,7 +57,7 @@ async function processQueueItem(queueId: string) {
         insightsTopK: job.insightsTopK ?? 5
       }
     );
-
+    await redisService.delPattern(`${job.userId}/GET//match/${job.jobId}/*`);
 
     await matchQueueService.markCompleted(queueId, result);
 
