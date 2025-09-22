@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import redisService from '../services/redis.service.js';
 import service from '../services/matching.service.js';
-import matchQueueService from '../services/match.queue.service.js';  // ✅ Use queue service
+import matchQueueService from '../services/match.queue.service.js';
 import { logger } from '../utils/logger.js';
 
 const WORKER_ID = `worker-${process.pid}-${randomUUID()}`;

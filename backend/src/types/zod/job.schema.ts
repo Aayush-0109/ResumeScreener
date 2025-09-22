@@ -1,4 +1,3 @@
-// src/validation/job.schema.ts
 import { z } from 'zod';
 
 export const createJobBody = z.object({

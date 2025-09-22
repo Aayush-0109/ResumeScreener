@@ -1,9 +1,9 @@
 import { Env } from "../types/zod/env.schema.js"
-import {  InternalServerError } from "../utils/ApiError.js";
+import { InternalServerError } from "../utils/ApiError.js";
 import { prisma } from "./db.js";
 import { redisClient } from "./redis.js";
 
-export const validateConnections = async (env : Env) :Promise<void> => {
+export const validateConnections = async (env: Env): Promise<void> => {
   const checks = [];
   checks.push(
     prisma.$queryRaw`SELECT 1`
@@ -13,33 +13,19 @@ export const validateConnections = async (env : Env) :Promise<void> => {
         throw new InternalServerError('Database unreachable');
       })
   );
-  
-  // Redis connectivity
+
   checks.push(
-    redisClient.ping()
-      .then(() => console.log('✅ Redis connection OK'))
-      .catch((err: Error) => {
-        console.error('❌ Redis connection failed:', err.message);
-        throw new InternalServerError('Redis unreachable');
-      })
+    redisClient.ping().then(() => ({ service: 'redis', status: 'healthy' }))
+      .catch((error: any) => ({ service: 'redis', status: 'unhealthy', error: error.message }))
   );
-  
-  // AI Service connectivity
+
   checks.push(
-    fetch(`${env.AI_SERVICE_URL}/health`, { 
-      method: 'GET',
-      signal: AbortSignal.timeout(5000)
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        console.log('✅ AI Service connection OK');
-      })
-      .catch((err: Error) => {
-        console.error('❌ AI Service connection failed:', err.message);
-        throw new InternalServerError('AI Service unreachable');
-      })
+    fetch(`${env.AI_SERVICE_URL}/health`).then(r =>
+      r.ok ? { service: 'ai-service', status: 'healthy' }
+        : { service: 'ai-service', status: 'unhealthy', error: `HTTP ${r.status}` }
+    ).catch((error: any) => ({ service: 'ai-service', status: 'unhealthy', error: error.message }))
   );
-  
+
   try {
     await Promise.all(checks);
     console.log('🚀 All services healthy');
@@ -47,5 +33,5 @@ export const validateConnections = async (env : Env) :Promise<void> => {
     console.error('💥 Startup failed - fix connections and restart');
     process.exit(1);
   }
-  
+
 }

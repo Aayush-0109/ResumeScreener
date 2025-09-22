@@ -3,7 +3,7 @@ import { AuthService } from "../services/auth.service.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { CookieOptions, Request, Response } from 'express';
-import { logger } from '../utils/logger.js';  // ✅ Add this import
+import { logger } from '../utils/logger.js';
 
 const isProd = process.env.NODE_ENV === 'production'
 const secureFlag = (process.env.COOKIE_SECURE === 'true') || isProd

@@ -112,7 +112,7 @@ class ResumeService implements IResumeService {
           });
         }
       } catch (error) {
-        // skip failed files
+        // Skip failed files during sync processing
       }
     }
 
@@ -213,7 +213,7 @@ class ResumeService implements IResumeService {
     return { deletedCount: result.count };
   }
 
-  
+
   async processParseQueueJob(queueId: string): Promise<void> {
     logger.info('Processing parse queue job', {
       queueId,
@@ -228,7 +228,6 @@ class ResumeService implements IResumeService {
 
     let processedCount = 0;
 
-    // Process each resume
     for (const resumeId of job.resumeIds) {
       const resume = await prisma.resume.findUnique({
         where: { id: resumeId },
@@ -254,14 +253,14 @@ class ResumeService implements IResumeService {
           service: 'resume'
         });
 
-        
+
         const aiResponse = await parseViaAiService(
           Buffer.from(resume.fileBuffer!),
           resume.fileName,
           resume.mimeType
         );
         const parsed = aiResponse.data.parsed;
-        logger.debug("parse check" ,{
+        logger.debug("parse check", {
           parsed
         })
         await prisma.resume.update({

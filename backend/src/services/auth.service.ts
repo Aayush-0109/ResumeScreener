@@ -46,7 +46,7 @@ export class AuthService {
             })
     }
 
-    static async  register (email: string, password: string, name: string) {
+    static async register(email: string, password: string, name: string) {
         const existingUser = await prisma.user.findUnique({
             where: { email }
         });
@@ -68,23 +68,21 @@ export class AuthService {
         return user
     }
 
-    static async login (email: string, password: string){
-        // Find user
+    static async login(email: string, password: string) {
         const user = await prisma.user.findUnique({
             where: { email }
         });
 
         if (!user) {
-            throw new NotFoundError("User not found");
+            throw new ForbiddenError("Invalid credentials");
         }
 
-        // Check password
         const isPasswordValid = await bcrypt.compare(password, user.password);
+
         if (!isPasswordValid) {
-            throw new ForbiddenError("Invalid password");
+            throw new ForbiddenError("Invalid credentials");
         }
 
-        // Generate new tokens
         const accessToken = this.generateAccessToken(user.id, user.email, user.role, user.name);
         const refreshToken = this.generateRefreshToken(user.id, user.email, user.role);
 
@@ -99,7 +97,7 @@ export class AuthService {
         return { user: updatedUser, accessToken, refreshToken };
     }
 
-    static async refreshAccessToken   (refreshToken: string) {
+    static async refreshAccessToken(refreshToken: string) {
         const payload = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET!) as any;
         const user = await prisma.user.findUnique({
             where: {
@@ -123,7 +121,7 @@ export class AuthService {
         return { updatedUser, newAccessToken, newRefreshToken }
     }
 
-    static async logout (userId: string)  {
+    static async logout(userId: string) {
         const updatedUser = await prisma.user.update({
             where: {
                 id: userId
@@ -136,9 +134,9 @@ export class AuthService {
         return updatedUser
     }
 
-    static  async getUserById  (userId: string)  {
+    static async getUserById(userId: string) {
         console.log(userId);
-        
+
         const user = await prisma.user.findUnique({
             where: {
                 id: userId
