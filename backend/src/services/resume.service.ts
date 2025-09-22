@@ -5,6 +5,8 @@ import { ParseStatus } from '@prisma/client';
 import { logger } from '../utils/logger.js';
 import type { AIParseResponse } from '../types/ai.types.js';
 import parseQueueService from './parse.queue.service.js';
+import redisService from './redis.service.js';
+import matchingService from './matching.service.js';
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
@@ -232,6 +234,7 @@ class ResumeService implements IResumeService {
       const resume = await prisma.resume.findUnique({
         where: { id: resumeId },
         select: {
+          userId: true,
           id: true,
           fileName: true,
           mimeType: true,
@@ -277,12 +280,17 @@ class ResumeService implements IResumeService {
           }
         });
 
+        await redisService.delPattern(`${resume.userId}/GET//resume/my*`)
+        await matchingService.clearAllUserMatches(resume.userId);
+        await redisService.delPattern(`${resume.userId}/GET//match*`)
+
         logger.info('Resume parsed successfully', {
           resumeId,
           fileName: resume.fileName,
           provider: aiResponse.data?.meta?.successful_provider,
           service: 'resume'
         });
+
 
       } catch (error: any) {
         logger.error('Resume parsing failed', {

@@ -23,9 +23,9 @@ class RedisService {
   }
   async get(key: string) {
     try {
+      console.log("GET : "+key);
       const cacheData = await this.redis.get(key);
       const parsedData = cacheData ? JSON.parse(cacheData) : null;
-      console.log(key + " " + cacheData);
 
       return parsedData
 
