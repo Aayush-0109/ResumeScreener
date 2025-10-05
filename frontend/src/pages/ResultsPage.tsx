@@ -1,39 +1,94 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { MatchingService, JobService, type Job } from '../services/mock';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useMatchingStore } from '../state/matchingStore';
+import { useJobStore } from '../state/jobStore';
+import type { MatchResult as Match } from '../api/types';
 import Table from '../ui/components/Table';
 import Button from '../ui/components/Button';
+import { toast } from '../utils/toast';
 
-type MatchResult = {
-    id: string;
-    resumeId: string;
-    overallMatchScore: number;
-    skillsMatchScore: number;
-    experienceMatchScore: number;
-    educationMatchScore: number;
-    matchedSkills: string[];
-    missingSkills: string[];
-};
+type MatchResultWithId = Match & { id: string };
 
 export default function ResultsPage() {
     const { jobId } = useParams();
-    const [matches, setMatches] = useState<MatchResult[]>([]);
-    const [job, setJob] = useState<Job | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [searchParams] = useSearchParams();
+    const queueId = searchParams.get('queueId');
+
+    const { matches, isLoading, isMutating, error: matchError, matchQueue, fetchMatches, checkMatchStatus, exportMatches, clearError: clearMatchError } = useMatchingStore();
+    const { jobs, fetchJobs } = useJobStore();
+    const [exporting, setExporting] = useState(false);
+
+    const job = jobs.find(j => j.id === jobId);
 
     useEffect(() => {
+        if (jobId) {
+            fetchMatches(jobId);
+        }
+        if (jobs.length === 0) {
+            fetchJobs();
+        }
+    }, [jobId, fetchMatches, fetchJobs, jobs.length]);
+
+    useEffect(() => {
+        if (matchError) {
+            toast.error(matchError);
+            clearMatchError();
+        }
+    }, [matchError, clearMatchError]);
+
+    useEffect(() => {
+        if (!queueId) return;
+
+        const interval = setInterval(async () => {
+            await checkMatchStatus(queueId);
+            const { matchQueue } = useMatchingStore.getState();
+
+            if (matchQueue?.status === 'COMPLETED') {
+                toast.success('Matching completed!');
+                if (jobId) {
+                    await fetchMatches(jobId);
+                }
+                clearInterval(interval);
+            } else if (matchQueue?.status === 'FAILED') {
+                toast.error('Matching failed: ' + matchQueue.errorMessage);
+                clearInterval(interval);
+            }
+        }, 2000);
+
+        return () => clearInterval(interval);
+    }, [queueId, checkMatchStatus, jobId, fetchMatches]);
+
+    async function handleExport(format: 'csv' | 'json') {
         if (!jobId) return;
 
-        Promise.all([
-            MatchingService.listMatches(jobId),
-            JobService.listMyJobs()
-        ]).then(([matchesResult, jobs]) => {
-            setMatches(matchesResult.data.map((m: any) => ({ ...m, id: m.resumeId })));
-            setJob(jobs.find(j => j.id === jobId) || null);
-        }).finally(() => {
-            setLoading(false);
-        });
-    }, [jobId]);
+        setExporting(true);
+        try {
+            await exportMatches(jobId, format);
+            toast.success(`Exported as ${format.toUpperCase()}`);
+        } catch (error) {
+            toast.error('Export failed');
+        } finally {
+            setExporting(false);
+        }
+    }
+
+    async function handleRerun() {
+        if (!jobId) return;
+        toast.info('Re-running match...');
+        // Navigate back to match page with pre-selected job
+        window.location.href = `/match?jobId=${jobId}`;
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-2 text-gray-600">Loading results...</span>
+            </div>
+        );
+    }
+
+    const matchesWithId: MatchResultWithId[] = matches.map(m => ({ ...m, id: m.resumeId }));
 
     const getScoreColor = (score: number) => {
         if (score >= 0.8) return 'text-green-600 bg-green-50';
@@ -52,9 +107,9 @@ export default function ResultsPage() {
 
     const columns = [
         {
-            key: 'resumeId' as keyof MatchResult,
+            key: 'resumeId' as keyof MatchResultWithId,
             header: 'Candidate',
-            render: (match: MatchResult) => (
+            render: (match: MatchResultWithId) => (
                 <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10">
                         <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
@@ -71,49 +126,49 @@ export default function ResultsPage() {
             )
         },
         {
-            key: 'overallMatchScore' as keyof MatchResult,
+            key: 'overallMatchScore' as keyof MatchResultWithId,
             header: 'Overall Match',
             sortable: true,
-            render: (match: MatchResult) => (
+            render: (match: MatchResultWithId) => (
                 <div className="text-center">
-                    {getScoreBadge(match.overallMatchScore)}
+                    {getScoreBadge(match.overallMatchScore || 0)}
                 </div>
             )
         },
         {
-            key: 'skillsMatchScore' as keyof MatchResult,
+            key: 'skillsMatchScore' as keyof MatchResultWithId,
             header: 'Skills',
             sortable: true,
-            render: (match: MatchResult) => (
+            render: (match: MatchResultWithId) => (
                 <div className="text-center">
-                    {getScoreBadge(match.skillsMatchScore)}
+                    {getScoreBadge(match.skillsMatchScore || 0)}
                 </div>
             )
         },
         {
-            key: 'experienceMatchScore' as keyof MatchResult,
+            key: 'experienceMatchScore' as keyof MatchResultWithId,
             header: 'Experience',
             sortable: true,
-            render: (match: MatchResult) => (
+            render: (match: MatchResultWithId) => (
                 <div className="text-center">
-                    {getScoreBadge(match.experienceMatchScore)}
+                    {getScoreBadge(match.experienceMatchScore || 0)}
                 </div>
             )
         },
         {
-            key: 'educationMatchScore' as keyof MatchResult,
+            key: 'educationMatchScore' as keyof MatchResultWithId,
             header: 'Education',
             sortable: true,
-            render: (match: MatchResult) => (
+            render: (match: MatchResultWithId) => (
                 <div className="text-center">
-                    {getScoreBadge(match.educationMatchScore)}
+                    {getScoreBadge(match.educationMatchScore || 0)}
                 </div>
             )
         },
         {
-            key: 'matchedSkills' as keyof MatchResult,
+            key: 'matchedSkills' as keyof MatchResultWithId,
             header: 'Matched Skills',
-            render: (match: MatchResult) => (
+            render: (match: MatchResultWithId) => (
                 <div className="flex flex-wrap gap-1">
                     {match.matchedSkills.slice(0, 2).map(skill => (
                         <span key={skill} className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
@@ -127,9 +182,9 @@ export default function ResultsPage() {
             )
         },
         {
-            key: 'missingSkills' as keyof MatchResult,
+            key: 'missingSkills' as keyof MatchResultWithId,
             header: 'Missing Skills',
-            render: (match: MatchResult) => (
+            render: (match: MatchResultWithId) => (
                 <div className="flex flex-wrap gap-1">
                     {match.missingSkills.slice(0, 2).map(skill => (
                         <span key={skill} className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-red-100 text-red-800">
@@ -144,14 +199,7 @@ export default function ResultsPage() {
         }
     ];
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-64">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-                <span className="ml-2 text-gray-600">Loading results...</span>
-            </div>
-        );
-    }
+
 
     return (
         <div className="space-y-6">
@@ -177,13 +225,13 @@ export default function ResultsPage() {
                     )}
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="secondary" size="sm">
+                    <Button variant="secondary" size="sm" onClick={() => handleExport('csv')} disabled={exporting || isMutating}>
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        Export CSV
+                        {exporting ? 'Exporting...' : 'Export CSV'}
                     </Button>
-                    <Button size="sm">
+                    <Button size="sm" onClick={handleRerun} disabled={isMutating}>
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
@@ -245,7 +293,7 @@ export default function ResultsPage() {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-500">Strong Matches</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {matches.filter(m => m.overallMatchScore >= 0.8).length}
+                                {matches.filter(m => (m.overallMatchScore || 0) >= 0.8).length}
                             </p>
                         </div>
                     </div>
@@ -264,7 +312,7 @@ export default function ResultsPage() {
                             <p className="text-sm font-medium text-gray-500">Average Score</p>
                             <p className="text-2xl font-semibold text-gray-900">
                                 {matches.length > 0
-                                    ? ((matches.reduce((sum, m) => sum + m.overallMatchScore, 0) / matches.length) * 100).toFixed(0)
+                                    ? ((matches.reduce((sum, m) => sum + (m.overallMatchScore || 0), 0) / matches.length) * 100).toFixed(0)
                                     : '0'
                                 }%
                             </p>
@@ -285,7 +333,7 @@ export default function ResultsPage() {
                             <p className="text-sm font-medium text-gray-500">Top Score</p>
                             <p className="text-2xl font-semibold text-gray-900">
                                 {matches.length > 0
-                                    ? (Math.max(...matches.map(m => m.overallMatchScore)) * 100).toFixed(0)
+                                    ? (Math.max(...matches.map(m => m.overallMatchScore || 0)) * 100).toFixed(0)
                                     : '0'
                                 }%
                             </p>
@@ -297,8 +345,8 @@ export default function ResultsPage() {
             {/* Results Table */}
             <Table
                 columns={columns}
-                rows={matches}
-                loading={loading}
+                rows={matchesWithId}
+                loading={isLoading}
                 emptyMessage="No matching results found"
                 onRowClick={(match) => console.log('Clicked match:', match)}
             />
