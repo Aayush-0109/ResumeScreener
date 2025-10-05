@@ -1,43 +1,58 @@
 import { useEffect, useState } from 'react';
-import { JobService, MatchingService, type Job } from '../services/mock';
+import { useJobStore } from '../state/jobStore';
+import { useMatchingStore } from '../state/matchingStore';
+import type { Job } from '../api/types';
 import { useNavigate } from 'react-router-dom';
 import Button from '../ui/components/Button';
+import { toast } from '../utils/toast';
 
 export default function MatchPage() {
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const { jobs, isLoading, error: jobError, fetchJobs, clearError: clearJobError } = useJobStore();
+  const { isMutating, error: matchError, enqueueMatch, clearError: clearMatchError } = useMatchingStore();
   const [selected, setSelected] = useState<string>('');
   const [topN, setTopN] = useState<number>(10);
   const [insightsTopK, setInsightsTopK] = useState<number>(5);
-  const [loading, setLoading] = useState(true);
-  const [matching, setMatching] = useState(false);
   const nav = useNavigate();
 
   useEffect(() => {
-    JobService.listMyJobs()
-      .then(setJobs)
-      .finally(() => setLoading(false));
-  }, []);
+    fetchJobs();
+  }, [fetchJobs]);
+
+  useEffect(() => {
+    if (jobError) {
+      toast.error(jobError);
+      clearJobError();
+    }
+  }, [jobError, clearJobError]);
+
+  useEffect(() => {
+    if (matchError) {
+      toast.error(matchError);
+      clearMatchError();
+    }
+  }, [matchError, clearMatchError]);
 
   const selectedJob = jobs.find(j => j.id === selected);
 
   async function onMatch() {
-    if (!selected) return;
-    
-    setMatching(true);
+    if (!selected) {
+      toast.warning('Please select a job first');
+      return;
+    }
+
     try {
-      await MatchingService.enqueueMatch(selected, { topN, insightsTopK });
-      nav(`/results/${selected}`);
+      const queueId = await enqueueMatch(selected, { topN, insightsTopK });
+      toast.success('Matching queued successfully!');
+      nav(`/results/${selected}?queueId=${queueId}`);
     } catch (error) {
       console.error('Matching failed:', error);
-    } finally {
-      setMatching(false);
     }
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         <span className="ml-2 text-gray-600">Loading jobs...</span>
       </div>
     );
@@ -62,11 +77,11 @@ export default function MatchPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Select Job Position
               </label>
-              <select 
-                value={selected} 
+              <select
+                value={selected}
                 onChange={e => setSelected(e.target.value)}
                 className="select w-full"
-                disabled={matching}
+                disabled={isMutating}
               >
                 <option value="">Choose a job position...</option>
                 {jobs.map(job => (
@@ -90,7 +105,7 @@ export default function MatchPage() {
                   ))}
                 </div>
                 <div className="mt-3 text-sm text-gray-500">
-                  Experience: {selectedJob.experience || 'Not specified'} years • 
+                  Experience: {selectedJob.experience || 'Not specified'} years •
                   Education: {selectedJob.education || 'Not specified'}
                 </div>
               </div>
@@ -102,14 +117,14 @@ export default function MatchPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Top Matches
                 </label>
-                <input 
-                  type="number" 
-                  value={topN} 
+                <input
+                  type="number"
+                  value={topN}
                   onChange={e => setTopN(Number(e.target.value))}
                   min="1"
                   max="100"
                   className="input"
-                  disabled={matching}
+                  disabled={isMutating}
                 />
                 <p className="text-xs text-gray-500 mt-1">Number of best matches to return (1-100)</p>
               </div>
@@ -118,28 +133,28 @@ export default function MatchPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   AI Insights
                 </label>
-                <input 
-                  type="number" 
-                  value={insightsTopK} 
+                <input
+                  type="number"
+                  value={insightsTopK}
                   onChange={e => setInsightsTopK(Number(e.target.value))}
                   min="0"
                   max="20"
                   className="input"
-                  disabled={matching}
+                  disabled={isMutating}
                 />
                 <p className="text-xs text-gray-500 mt-1">Detailed insights for top K matches (0-20)</p>
               </div>
             </div>
 
             {/* Action Button */}
-            <Button 
+            <Button
               onClick={onMatch}
-              disabled={!selected || matching}
-              loading={matching}
+              disabled={!selected || isMutating}
+              loading={isMutating}
               className="w-full"
               size="lg"
             >
-              {matching ? 'Processing...' : 'Start AI Matching'}
+              {isMutating ? 'Processing...' : 'Start AI Matching'}
             </Button>
           </div>
         </div>

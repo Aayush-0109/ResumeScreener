@@ -19,7 +19,16 @@ app.use(cookieParser())
 app.use(express.json({limit : '10mb'}));
 app.use(express.urlencoded({extended : true , limit : '10mb'}))
 app.use(helmet());
-app.use(cors());
+
+const allowedOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
+
+app.use(cors({
+  origin: allowedOrigin,
+  credentials: true,
+  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization','x-correlation-id']
+}));
+
 app.use(correlationMiddleware);
 app.use(requestLogger);
 

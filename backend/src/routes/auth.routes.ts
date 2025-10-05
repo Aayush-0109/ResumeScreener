@@ -9,11 +9,11 @@ const router = Router();
 
 router.post('/register', strictLimit ,validateBody(registerBody), registerUser);
 router.post('/login', strictLimit,validateBody(loginBody), loginUser);
-router.post('/refresh', strictLimit,validateBody(refreshBody), refreshAccessToken);
+router.post('/refresh', strictLimit, refreshAccessToken);
 
 
 // Protected routes
-router.post('/logout/:id', authMiddleware, logout);
-router.get('/profile/:id',authMiddleware, moderateLimit,getProfile);
+router.post('/logout', authMiddleware, logout);
+router.get('/profile',authMiddleware, moderateLimit,getProfile);
 
 export default router;

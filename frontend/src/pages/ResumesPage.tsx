@@ -1,42 +1,66 @@
-import { useEffect, useState } from 'react';
-import { ResumeService, type Resume } from '../services/mock';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useResumeStore } from '../state/resumeStore';
+import type { Resume } from '../api/types';
 import FileUpload from '../ui/components/FileUpload';
 import Table from '../ui/components/Table';
 import Button from '../ui/components/Button';
+import { toast } from '../utils/toast';
 
 export default function ResumesPage() {
-    const [resumes, setResumes] = useState<Resume[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [uploading, setUploading] = useState(false);
+    const { resumes, isLoading, isMutating, isProcessing, error, fetchResumes, uploadResumes, startProcessingMonitor, stopProcessingMonitor, clearError } = useResumeStore();
     const [uploadError, setUploadError] = useState<string | null>(null);
     const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
+    const [pollingQueueId, setPollingQueueId] = useState<string | null>(null);
+    const [skillsInput, setSkillsInput] = useState<string>('');
+    const [expMin, setExpMin] = useState<string>('');
+    const [expMax, setExpMax] = useState<string>('');
+    const debounceRef = useRef<number | null>(null);
 
     useEffect(() => {
-        ResumeService.listMyResumes()
-            .then(r => setResumes(r.data))
-            .finally(() => setLoading(false));
-    }, []);
+        fetchResumes();
+    }, [fetchResumes]);
+
+    useEffect(() => {
+        if (error) {
+            toast.error(error);
+            clearError();
+        }
+    }, [error, clearError]);
+
+    useEffect(() => {
+        return () => stopProcessingMonitor();
+    }, [stopProcessingMonitor]);
+
+    // Debounced server-side filtering aligned with backend (skills, experienceMin, experienceMax)
+    useEffect(() => {
+        if (debounceRef.current) window.clearTimeout(debounceRef.current);
+        debounceRef.current = window.setTimeout(() => {
+            const query: any = {};
+            if (skillsInput.trim()) query.skills = skillsInput.trim();
+            if (expMin.trim()) query.experienceMin = expMin.trim();
+            if (expMax.trim()) query.experienceMax = expMax.trim();
+            fetchResumes(query);
+        }, 400);
+        return () => {
+            if (debounceRef.current) window.clearTimeout(debounceRef.current);
+        };
+    }, [skillsInput, expMin, expMax, fetchResumes]);
 
     async function handleUpload(files: FileList) {
         if (!files.length) return;
 
-        setUploading(true);
         setUploadError(null);
         setUploadSuccess(null);
 
         try {
             const arr = Array.from(files);
-            const result = await ResumeService.uploadMany(arr);
-            setUploadSuccess(`Successfully queued ${result.resumeCount} resumes for processing!`);
-
-            // Refresh resumes list after upload
-            setTimeout(() => {
-                ResumeService.listMyResumes().then(r => setResumes(r.data));
-            }, 1000);
+            await uploadResumes(arr);
+            setUploadSuccess(`Successfully queued ${arr.length} resumes for processing!`);
+            startProcessingMonitor();
+            toast.info('Resumes uploaded! Processing in background...');
         } catch (error) {
             setUploadError('Failed to upload resumes. Please try again.');
-        } finally {
-            setUploading(false);
+            toast.error('Upload failed');
         }
     }
 
@@ -54,7 +78,13 @@ export default function ResumesPage() {
                         </div>
                     </div>
                     <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{resume.name || 'Unknown'}</div>
+                        <div className="flex items-center gap-2">
+                            <div className="text-sm font-medium text-gray-900">{resume.name || resume.fileName}</div>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs ${(resume as any).parseStatus === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
+                                }`}>
+                                {(resume as any).parseStatus === 'PENDING' ? 'Pending' : 'Parsed'}
+                            </span>
+                        </div>
                         <div className="text-sm text-gray-500">{resume.fileName}</div>
                     </div>
                 </div>
@@ -65,7 +95,11 @@ export default function ResumesPage() {
             header: 'Contact',
             render: (resume: Resume) => (
                 <div>
-                    {resume.email && <div className="text-sm text-gray-900">{resume.email}</div>}
+                    {resume.email ? (
+                        <div className="text-sm text-gray-900">{resume.email}</div>
+                    ) : (
+                        <div className="text-sm text-gray-500">No email</div>
+                    )}
                     <div className="text-xs text-gray-500">
                         {(resume.fileSize / 1024).toFixed(1)} KB
                     </div>
@@ -135,7 +169,7 @@ export default function ResumesPage() {
                     maxSize={10}
                     onFiles={handleUpload}
                     onError={setUploadError}
-                    disabled={uploading}
+                    disabled={isMutating}
                 />
 
                 {uploadError && (
@@ -165,6 +199,25 @@ export default function ResumesPage() {
                         </div>
                     </div>
                 )}
+            </div>
+
+            {/* Filters */}
+            <div className="card p-4 flex flex-wrap items-end gap-3">
+                <div className="w-full md:w-1/3">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Skills (comma separated)</label>
+                    <input className="input" placeholder="react, node, sql" value={skillsInput} onChange={e => setSkillsInput(e.target.value)} />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Min Exp</label>
+                    <input className="input w-28" type="number" min={0} value={expMin} onChange={e => setExpMin(e.target.value)} />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Max Exp</label>
+                    <input className="input w-28" type="number" min={0} value={expMax} onChange={e => setExpMax(e.target.value)} />
+                </div>
+                <div className="ml-auto flex gap-2">
+                    <Button variant="secondary" onClick={() => { setSkillsInput(''); setExpMin(''); setExpMax(''); fetchResumes(); }}>Reset</Button>
+                </div>
             </div>
 
             {/* Stats Cards */}
@@ -241,11 +294,22 @@ export default function ResumesPage() {
                 </div>
             </div>
 
+            {/* Processing Banner */}
+            {isProcessing && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-3">
+                    <svg className="w-5 h-5 text-blue-600 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="12" cy="12" r="10" strokeWidth="4" className="opacity-25" />
+                        <path d="M4 12a8 8 0 018-8" strokeWidth="4" className="opacity-75" />
+                    </svg>
+                    <div className="text-sm text-blue-800">Parsing resumes… This may take a minute. You can continue using the app.</div>
+                </div>
+            )}
+
             {/* Resumes Table */}
             <Table
                 columns={columns}
                 rows={resumes}
-                loading={loading}
+                loading={isLoading}
                 emptyMessage="No resumes uploaded yet"
                 onRowClick={(resume) => console.log('Clicked resume:', resume)}
             />

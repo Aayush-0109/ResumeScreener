@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { CookieOptions, Request, Response } from 'express';
 import { logger } from '../utils/logger.js';
+import { UnauthorizedError } from "../utils/ApiError.js";
 
 const isProd = process.env.NODE_ENV === 'production'
 const secureFlag = (process.env.COOKIE_SECURE === 'true') || isProd
@@ -61,6 +62,7 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
 });
 export const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
     const refreshToken = req.cookies?.refreshToken
+    if(!refreshAccessToken) throw new UnauthorizedError("Refresh token not found");
     const { updatedUser, newAccessToken, newRefreshToken } = await AuthService.refreshAccessToken(refreshToken)
     res.cookie("refreshToken", newRefreshToken, cookieOption)
         .cookie("accessToken", newAccessToken, cookieOption)

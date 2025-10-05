@@ -1,17 +1,23 @@
-import { useEffect, useState } from 'react';
-import { JobService, type Job } from '../services/mock';
+import { useEffect } from 'react';
+import { useJobStore } from '../state/jobStore';
+import type { Job } from '../api/types';
 import Table from '../ui/components/Table';
 import Button from '../ui/components/Button';
+import { toast } from '../utils/toast';
 
 export default function JobsPage() {
-    const [jobs, setJobs] = useState<Job[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { jobs, isLoading, error, fetchJobs, clearError } = useJobStore();
 
     useEffect(() => {
-        JobService.listMyJobs()
-            .then(setJobs)
-            .finally(() => setLoading(false));
-    }, []);
+        fetchJobs();
+    }, [fetchJobs]);
+
+    useEffect(() => {
+        if (error) {
+            toast.error(error);
+            clearError();
+        }
+    }, [error, clearError]);
 
     const columns = [
         {
@@ -138,7 +144,7 @@ export default function JobsPage() {
             <Table
                 columns={columns}
                 rows={jobs}
-                loading={loading}
+                loading={isLoading}
                 emptyMessage="No job positions found"
                 onRowClick={(job) => console.log('Clicked job:', job)}
             />
