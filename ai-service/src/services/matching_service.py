@@ -7,38 +7,52 @@ from src.config.settings import settings
 def _call_gemini_for_matching(job: JobInput, resumes: List[ResumeInput], weights: Dict[str, float]) -> Optional[List[Dict[str, Any]]]:
     try:
         import google.generativeai as genai
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Gemini library not available: {e}")
         return None
     
     api_key = settings.google_api_key
     if not api_key:
+        logger.warning("🔑 Gemini API key not configured")
         return None
     
     try:
+        logger.info("🤖 Attempting Gemini matching...")
         genai.configure(api_key=api_key)
+        
+        # Use the latest model name and API version
         model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            generation_config={"temperature": 0.1, "response_mime_type": "application/json"}
+            model_name="gemini-1.5-flash-latest",  # Updated model name
+            generation_config={
+                "temperature": 0.1,
+                "response_mime_type": "application/json"
+            }
         )
         
         # Create detailed prompt for matching
         prompt = _create_matching_prompt(job, resumes, weights)
         
+        logger.info(f"📤 Sending {len(resumes)} resumes to Gemini for matching")
         resp = model.generate_content(prompt)
         content = getattr(resp, "text", None) or "{}"
         
         try:
-            return json.loads(content)
+            result = json.loads(content)
+            logger.info(f"✅ GEMINI responded successfully with {len(result) if isinstance(result, list) else 0} matches")
+            return result
         except json.JSONDecodeError:
             # Try to extract JSON from response
             start = content.find('[')
             end = content.rfind(']') + 1
             if start != -1 and end != 0:
-                return json.loads(content[start:end])
+                result = json.loads(content[start:end])
+                logger.info(f"✅ GEMINI responded (extracted JSON) with {len(result)} matches")
+                return result
+            logger.error("Failed to parse Gemini JSON response")
             return None
             
     except Exception as e:
-        logger.error(f"Gemini matching failed: {e}")
+        logger.error(f"❌ Gemini matching failed: {e}")
         return None
 
 def _create_matching_prompt(job: JobInput, resumes: List[ResumeInput], weights: Dict[str, float]) -> str:

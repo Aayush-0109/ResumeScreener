@@ -1,25 +1,65 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useResumeStore } from '../state/resumeStore';
-import type { Resume } from '../api/types';
-import FileUpload from '../ui/components/FileUpload';
-import Table from '../ui/components/Table';
-import Button from '../ui/components/Button';
-import { toast } from '../utils/toast';
+import { useUIStore } from '../state/uiStore';
+import { ResumeCard } from '../components/features/resumes/ResumeCard';
+import { ResumeFilters } from '../components/features/resumes/ResumeFilters';
+import { ParseProgressModal } from '../components/features/resumes/ParseProgressModal';
+import { Button } from '../components/common/Button';
+import { Modal, ModalFooter } from '../components/common/Modal';
+import { Card } from '../components/common/Card';
+import { Pagination } from '../components/common/Pagination';
+import { PageSpinner, Spinner } from '../components/common/Spinner';
+import toast from 'react-hot-toast';
 
 export default function ResumesPage() {
-    const { resumes, isLoading, isMutating, isProcessing, error, fetchResumes, uploadResumes, startProcessingMonitor, stopProcessingMonitor, clearError } = useResumeStore();
-    const [uploadError, setUploadError] = useState<string | null>(null);
-    const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
-    const [pollingQueueId, setPollingQueueId] = useState<string | null>(null);
-    const [skillsInput, setSkillsInput] = useState<string>('');
-    const [expMin, setExpMin] = useState<string>('');
-    const [expMax, setExpMax] = useState<string>('');
-    const debounceRef = useRef<number | null>(null);
+    // Store state
+    const {
+        filteredResumes,
+        pagination,
+        isLoading,
+        isMutating,
+        error,
+        filters,
+        sortBy,
+        bulkSelection,
+        fetchResumes,
+        uploadResumes,
+        deleteResume,
+        bulkDeleteResumes,
+        clearAllResumes,
+        setFilters,
+        setSortBy,
+        clearFilters,
+        clearSelection,
+        getSelectedResumeIds,
+        clearError
+    } = useResumeStore();
 
+    const { openModal, closeModal, isModalOpen } = useUIStore();
+
+    // Local state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize] = useState(10);
+    const [parseQueueId, setParseQueueId] = useState<string | null>(null);
+    const [showFilters, setShowFilters] = useState(false);
+
+    // Sort options
+    const sortOptions = [
+        { label: 'Newest First', value: 'newest' },
+        { label: 'Oldest First', value: 'oldest' },
+        { label: 'Name (A-Z)', value: 'name-asc' },
+        { label: 'Name (Z-A)', value: 'name-desc' },
+        { label: 'Experience (High to Low)', value: 'exp-high' },
+        { label: 'Experience (Low to High)', value: 'exp-low' },
+        { label: 'Most Skills First', value: 'skills-count' }
+    ];
+
+    // Initial fetch
     useEffect(() => {
-        fetchResumes();
-    }, [fetchResumes]);
+        fetchResumesWithFilters();
+    }, []);
 
+    // Handle errors
     useEffect(() => {
         if (error) {
             toast.error(error);
@@ -27,294 +67,382 @@ export default function ResumesPage() {
         }
     }, [error, clearError]);
 
-    useEffect(() => {
-        return () => stopProcessingMonitor();
-    }, [stopProcessingMonitor]);
-
-    // Debounced server-side filtering aligned with backend (skills, experienceMin, experienceMax)
-    useEffect(() => {
-        if (debounceRef.current) window.clearTimeout(debounceRef.current);
-        debounceRef.current = window.setTimeout(() => {
-            const query: any = {};
-            if (skillsInput.trim()) query.skills = skillsInput.trim();
-            if (expMin.trim()) query.experienceMin = expMin.trim();
-            if (expMax.trim()) query.experienceMax = expMax.trim();
-            fetchResumes(query);
-        }, 400);
-        return () => {
-            if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    // Fetch resumes with current filters (backend filters only)
+    const fetchResumesWithFilters = () => {
+        const query: any = {
+            page: currentPage,
+            limit: pageSize
         };
-    }, [skillsInput, expMin, expMax, fetchResumes]);
 
-    async function handleUpload(files: FileList) {
+        // Add backend filters
+        if (filters.skills && filters.skills.length > 0) {
+            query.skills = filters.skills;
+        }
+        if (filters.experienceMin !== undefined) {
+            query.experienceMin = filters.experienceMin;
+        }
+        if (filters.experienceMax !== undefined) {
+            query.experienceMax = filters.experienceMax;
+        }
+
+        fetchResumes(query);
+    };
+
+    // Refetch when filters or pagination changes
+    useEffect(() => {
+        fetchResumesWithFilters();
+    }, [currentPage, pageSize, filters.skills, filters.experienceMin, filters.experienceMax]);
+
+    // Handle file upload
+    const handleUpload = async (files: File[]) => {
         if (!files.length) return;
 
-        setUploadError(null);
-        setUploadSuccess(null);
+        try {
+            await uploadResumes(files);
+
+            toast.success(`${files.length} resumes uploaded successfully! Processing in background...`);
+            clearSelection();
+
+            // Refetch after upload to show processing status
+            setTimeout(() => fetchResumesWithFilters(), 1000);
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to upload resumes');
+        }
+    };
+
+    // Handle delete
+    const handleDelete = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this resume?')) return;
 
         try {
-            const arr = Array.from(files);
-            await uploadResumes(arr);
-            setUploadSuccess(`Successfully queued ${arr.length} resumes for processing!`);
-            startProcessingMonitor();
-            toast.info('Resumes uploaded! Processing in background...');
+            await deleteResume(id);
+            toast.success('Resume deleted successfully');
+            fetchResumesWithFilters();
         } catch (error) {
-            setUploadError('Failed to upload resumes. Please try again.');
-            toast.error('Upload failed');
+            toast.error('Failed to delete resume');
         }
-    }
+    };
 
-    const columns = [
-        {
-            key: 'fileName' as keyof Resume,
-            header: 'Resume',
-            render: (resume: Resume) => (
-                <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10">
-                        <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                            <svg className="h-6 w-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
-                            </svg>
-                        </div>
-                    </div>
-                    <div className="ml-4">
-                        <div className="flex items-center gap-2">
-                            <div className="text-sm font-medium text-gray-900">{resume.name || resume.fileName}</div>
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs ${(resume as any).parseStatus === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
-                                }`}>
-                                {(resume as any).parseStatus === 'PENDING' ? 'Pending' : 'Parsed'}
-                            </span>
-                        </div>
-                        <div className="text-sm text-gray-500">{resume.fileName}</div>
-                    </div>
-                </div>
-            )
-        },
-        {
-            key: 'email' as keyof Resume,
-            header: 'Contact',
-            render: (resume: Resume) => (
-                <div>
-                    {resume.email ? (
-                        <div className="text-sm text-gray-900">{resume.email}</div>
-                    ) : (
-                        <div className="text-sm text-gray-500">No email</div>
-                    )}
-                    <div className="text-xs text-gray-500">
-                        {(resume.fileSize / 1024).toFixed(1)} KB
-                    </div>
-                </div>
-            )
-        },
-        {
-            key: 'skills' as keyof Resume,
-            header: 'Skills',
-            render: (resume: Resume) => (
-                <div className="flex flex-wrap gap-1">
-                    {resume.skills.slice(0, 2).map(skill => (
-                        <span key={skill} className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
-                            {skill}
-                        </span>
-                    ))}
-                    {resume.skills.length > 2 && (
-                        <span className="text-xs text-gray-500">+{resume.skills.length - 2}</span>
-                    )}
-                </div>
-            )
-        },
-        {
-            key: 'experience' as keyof Resume,
-            header: 'Experience',
-            sortable: true,
-            render: (resume: Resume) => (
-                <span className="text-sm text-gray-900">
-                    {resume.experience ? `${resume.experience} years` : 'Not specified'}
-                </span>
-            )
-        },
-        {
-            key: 'uploadedAt' as keyof Resume,
-            header: 'Uploaded',
-            sortable: true,
-            render: (resume: Resume) => (
-                <span className="text-sm text-gray-500">
-                    {new Date(resume.uploadedAt).toLocaleDateString()}
-                </span>
-            )
+    // Handle bulk delete
+    const handleBulkDelete = async () => {
+        const selectedIds = getSelectedResumeIds();
+        if (!selectedIds.length) {
+            toast.error('No resumes selected');
+            return;
         }
-    ];
+
+        if (!confirm(`Delete ${selectedIds.length} selected resumes?`)) return;
+
+        openModal('bulk-action', { action: 'delete', count: selectedIds.length });
+
+        try {
+            await bulkDeleteResumes(selectedIds);
+            toast.success(`${selectedIds.length} resumes deleted`);
+            closeModal('bulk-action');
+            clearSelection();
+            fetchResumesWithFilters();
+        } catch (error) {
+            toast.error('Failed to delete some resumes');
+            closeModal('bulk-action');
+        }
+    };
+
+    // Handle clear all
+    const handleClearAll = async () => {
+        if (!confirm('This will delete ALL your resumes. Are you sure?')) return;
+
+        openModal('clear-confirm');
+
+        try {
+            await clearAllResumes();
+            toast.success('All resumes cleared');
+            closeModal('clear-confirm');
+            clearSelection();
+            fetchResumesWithFilters();
+        } catch (error) {
+            toast.error('Failed to clear resumes');
+            closeModal('clear-confirm');
+        }
+    };
+
+    // Handle filter change
+    const handleFilterChange = (newFilters: typeof filters) => {
+        setFilters(newFilters);
+        setCurrentPage(1); // Reset to page 1 on filter change
+    };
+
+    // Handle sort change
+    const handleSortChange = (newSort: string) => {
+        setSortBy(newSort as any);
+    };
+
+    // Handle page change
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
+
+    // Calculate stats
+    const stats = {
+        total: pagination.total || 0,
+        parsed: filteredResumes.filter(r => r.parseStatus === 'DONE').length,
+        pending: filteredResumes.filter(r => r.parseStatus === 'PENDING').length,
+        avgExperience: filteredResumes.length > 0
+            ? (filteredResumes.reduce((sum, r) => sum + (r.experience || 0), 0) / filteredResumes.length).toFixed(1)
+            : '0'
+    };
+
+    // Active filter count
+    const activeFilterCount = [
+        filters.skills?.length,
+        filters.experienceMin !== undefined,
+        filters.experienceMax !== undefined,
+        filters.parseStatus && filters.parseStatus !== 'ALL',
+        filters.uploadDate && filters.uploadDate !== 'all'
+    ].filter(Boolean).length;
+
+    // Check if any resumes are selected
+    const hasSelection = bulkSelection.selectedIds.size > 0;
+
+    if (isLoading && filteredResumes.length === 0) {
+        return <PageSpinner label="Loading resumes..." />;
+    }
 
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-start">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Resume Library</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">Resume Library</h1>
                     <p className="text-gray-600 mt-1">Upload and manage candidate resumes</p>
                 </div>
-            </div>
-
-            {/* Upload Section */}
-            <div className="card p-6">
-                <div className="mb-4">
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Upload New Resumes</h3>
-                    <p className="text-sm text-gray-600 mb-4">
-                        Upload multiple resume files. They will be processed asynchronously and parsed automatically.
-                    </p>
-                </div>
-
-                <FileUpload
-                    multiple
-                    accept=".pdf,.doc,.docx"
-                    maxSize={10}
-                    onFiles={handleUpload}
-                    onError={setUploadError}
-                    disabled={isMutating}
-                />
-
-                {uploadError && (
-                    <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <div className="flex">
-                            <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                            </svg>
-                            <div className="ml-3">
-                                <p className="text-sm font-medium text-red-800">Upload Error</p>
-                                <p className="text-sm text-red-700">{uploadError}</p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {uploadSuccess && (
-                    <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                        <div className="flex">
-                            <svg className="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                            <div className="ml-3">
-                                <p className="text-sm font-medium text-green-800">Upload Successful</p>
-                                <p className="text-sm text-green-700">{uploadSuccess}</p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* Filters */}
-            <div className="card p-4 flex flex-wrap items-end gap-3">
-                <div className="w-full md:w-1/3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Skills (comma separated)</label>
-                    <input className="input" placeholder="react, node, sql" value={skillsInput} onChange={e => setSkillsInput(e.target.value)} />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Min Exp</label>
-                    <input className="input w-28" type="number" min={0} value={expMin} onChange={e => setExpMin(e.target.value)} />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Max Exp</label>
-                    <input className="input w-28" type="number" min={0} value={expMax} onChange={e => setExpMax(e.target.value)} />
-                </div>
-                <div className="ml-auto flex gap-2">
-                    <Button variant="secondary" onClick={() => { setSkillsInput(''); setExpMin(''); setExpMax(''); fetchResumes(); }}>Reset</Button>
+                <div className="flex gap-3">
+                    <Button
+                        variant="secondary"
+                        onClick={() => openModal('upload-resumes')}
+                        disabled={isMutating}
+                    >
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        Upload Resumes
+                    </Button>
                 </div>
             </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="card p-6">
+                <div className="bg-white rounded-lg shadow p-6">
                     <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                            <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
-                                <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                            </div>
+                        <div className="flex-shrink-0 bg-primary-100 rounded-lg p-3">
+                            <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
                         </div>
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-500">Total Resumes</p>
-                            <p className="text-2xl font-semibold text-gray-900">{resumes.length}</p>
+                            <p className="text-2xl font-semibold text-gray-900">{stats.total}</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="card p-6">
+                <div className="bg-white rounded-lg shadow p-6">
                     <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                            <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
+                        <div className="flex-shrink-0 bg-green-100 rounded-lg p-3">
+                            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                         </div>
                         <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-500">Processed</p>
-                            <p className="text-2xl font-semibold text-gray-900">{resumes.length}</p>
+                            <p className="text-sm font-medium text-gray-500">Parsed</p>
+                            <p className="text-2xl font-semibold text-gray-900">{stats.parsed}</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="card p-6">
+                <div className="bg-white rounded-lg shadow p-6">
                     <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                            <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-                                <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
+                        <div className="flex-shrink-0 bg-yellow-100 rounded-lg p-3">
+                            <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div className="ml-4">
+                            <p className="text-sm font-medium text-gray-500">Pending</p>
+                            <p className="text-2xl font-semibold text-gray-900">{stats.pending}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-lg shadow p-6">
+                    <div className="flex items-center">
+                        <div className="flex-shrink-0 bg-purple-100 rounded-lg p-3">
+                            <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
                         </div>
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-500">Avg. Experience</p>
-                            <p className="text-2xl font-semibold text-gray-900">
-                                {resumes.length > 0
-                                    ? (resumes.reduce((sum, resume) => sum + (resume.experience || 0), 0) / resumes.length).toFixed(1)
-                                    : '0'
-                                } yrs
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="card p-6">
-                    <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                            <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z" />
-                                </svg>
-                            </div>
-                        </div>
-                        <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-500">Total Size</p>
-                            <p className="text-2xl font-semibold text-gray-900">
-                                {(resumes.reduce((sum, resume) => sum + resume.fileSize, 0) / 1024 / 1024).toFixed(1)} MB
-                            </p>
+                            <p className="text-2xl font-semibold text-gray-900">{stats.avgExperience} yrs</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Processing Banner */}
-            {isProcessing && (
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-3">
-                    <svg className="w-5 h-5 text-blue-600 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <circle cx="12" cy="12" r="10" strokeWidth="4" className="opacity-25" />
-                        <path d="M4 12a8 8 0 018-8" strokeWidth="4" className="opacity-75" />
-                    </svg>
-                    <div className="text-sm text-blue-800">Parsing resumes… This may take a minute. You can continue using the app.</div>
+            {/* Filters & Actions Bar */}
+            <div className="flex justify-between items-center gap-4">
+                <div className="flex items-center gap-3">
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setShowFilters(true)}
+                    >
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        </svg>
+                        Filters {activeFilterCount > 0 && `(${activeFilterCount})`}
+                    </Button>
+                    {activeFilterCount > 0 && (
+                        <Button variant="ghost" size="sm" onClick={clearFilters}>
+                            Clear Filters
+                        </Button>
+                    )}
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <select
+                        value={sortBy}
+                        onChange={(e) => handleSortChange(e.target.value)}
+                        className="input py-2 px-3"
+                    >
+                        {sortOptions.map(option => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
+                    </select>
+                    {hasSelection && (
+                        <>
+                            <Button variant="secondary" size="sm" onClick={clearSelection}>
+                                Clear ({bulkSelection.selectedIds.size})
+                            </Button>
+                            <Button variant="danger" size="sm" onClick={handleBulkDelete}>
+                                Delete Selected
+                            </Button>
+                        </>
+                    )}
+                    {filteredResumes.length > 0 && (
+                        <Button variant="ghost" size="sm" onClick={handleClearAll}>
+                            Clear All
+                        </Button>
+                    )}
+                </div>
+            </div>
+
+            {/* Resume Cards Grid */}
+            {isLoading ? (
+                <div className="flex justify-center items-center py-12">
+                    <Spinner />
+                    <span className="ml-3 text-gray-600">Loading resumes...</span>
+                </div>
+            ) : filteredResumes.length === 0 ? (
+                <Card className="text-center py-12">
+                    <div className="max-w-md mx-auto">
+                        <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <h3 className="mt-4 text-lg font-medium text-gray-900">No resumes found</h3>
+                        <p className="mt-2 text-sm text-gray-500">
+                            {activeFilterCount > 0 ? "Try adjusting your filters" : "Upload your first resume to get started"}
+                        </p>
+                        <div className="mt-6">
+                            <Button onClick={activeFilterCount > 0 ? clearFilters : () => openModal('upload-resumes')}>
+                                {activeFilterCount > 0 ? "Clear Filters" : "Upload Resume"}
+                            </Button>
+                        </div>
+                    </div>
+                </Card>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredResumes.map((resume) => (
+                        <ResumeCard
+                            key={resume.id}
+                            resume={resume}
+                            onDelete={() => handleDelete(resume.id)}
+                        />
+                    ))}
                 </div>
             )}
 
-            {/* Resumes Table */}
-            <Table
-                columns={columns}
-                rows={resumes}
-                loading={isLoading}
-                emptyMessage="No resumes uploaded yet"
-                onRowClick={(resume) => console.log('Clicked resume:', resume)}
-            />
+            {/* Pagination */}
+            {filteredResumes.length > 0 && pagination.totalPages && pagination.totalPages > 1 && (
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={pagination.totalPages}
+                    onPageChange={handlePageChange}
+                />
+            )}
+
+            {/* Parse Progress Modal */}
+            {parseQueueId && (
+                <ParseProgressModal
+                    isOpen={isModalOpen('parse-progress')}
+                    queueId={parseQueueId}
+                    onClose={() => {
+                        closeModal('parse-progress');
+                        setParseQueueId(null);
+                        fetchResumesWithFilters();
+                    }}
+                />
+            )}
+
+            {/* Upload Modal */}
+            <Modal isOpen={isModalOpen('upload-resumes')} onClose={() => closeModal('upload-resumes')} title="Upload Resumes">
+                <div className="space-y-4">
+                    <p className="text-sm text-gray-600">
+                        Upload multiple resume files (PDF, DOC, DOCX). Maximum file size: 10MB per file.
+                    </p>
+                    <input
+                        type="file"
+                        multiple
+                        accept=".pdf,.doc,.docx"
+                        onChange={(e) => {
+                            if (e.target.files) {
+                                handleUpload(Array.from(e.target.files));
+                                closeModal('upload-resumes');
+                            }
+                        }}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                    />
+                </div>
+                <ModalFooter>
+                    <Button variant="secondary" onClick={() => closeModal('upload-resumes')}>
+                        Cancel
+                    </Button>
+                </ModalFooter>
+            </Modal>
+
+            {/* Filters Modal */}
+            <Modal isOpen={showFilters} onClose={() => setShowFilters(false)} title="Filter Resumes" size="lg">
+                <div className="py-4">
+                    <ResumeFilters
+                        initialFilters={{
+                            skills: filters.skills || [],
+                            experienceMin: filters.experienceMin,
+                            experienceMax: filters.experienceMax,
+                            parseStatus: filters.parseStatus
+                        }}
+                        onApply={(newFilters) => {
+                            handleFilterChange(newFilters);
+                            setShowFilters(false);
+                        }}
+                    />
+                </div>
+                <ModalFooter>
+                    <Button variant="secondary" onClick={() => setShowFilters(false)}>
+                        Close
+                    </Button>
+                </ModalFooter>
+            </Modal>
         </div>
     );
 }
-
-

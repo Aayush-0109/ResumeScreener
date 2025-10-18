@@ -11,7 +11,7 @@ const service = new JobService();
 export const createJob = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user.id!;
 
- 
+
   logger.info('Job creation started', {
     userId,
     title: req.body.title,
@@ -23,7 +23,7 @@ export const createJob = asyncHandler(async (req: Request, res: Response) => {
 
   await redisService.delPattern(`${userId}/GET//job*`);
 
-  
+
   logger.info('Job creation completed', {
     userId,
     jobId: job.id,
@@ -36,7 +36,18 @@ export const createJob = asyncHandler(async (req: Request, res: Response) => {
 
 export const listJobs = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user.id!;
-  const result = await service.list(userId, req.query as unknown as SearchQuery);
+  const query = req.query as any;
+  const searchQuery: SearchQuery = {
+    q: query.q,
+    page: query.page,
+    limit: query.limit,
+    sort: query.sort ? query.sort.split(',').map((item: string) => {
+      const [field, order] = item.split(':');
+      return { field, order: order as 'asc' | 'desc' || 'asc' };
+    }) : undefined
+  };
+
+  const result = await service.list(userId, searchQuery);
   res.json(new ApiResponse(200, 'OK', result));
 });
 

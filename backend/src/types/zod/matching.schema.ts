@@ -44,5 +44,9 @@ export const ListMatchesQuerySchema = z.object({
   sortOrder: z.enum(['asc', 'desc']).optional()
 });
 export const JobIdParamSchema = z.object({
-  jobId: z.cuid("Invalid job ID format")
-})
+  jobId: z.string().min(1, "Invalid job ID format")
+});
+
+export const JobIdAsIdParamSchema = z.object({
+  id: z.string().min(1, "Invalid job ID format")
+});
