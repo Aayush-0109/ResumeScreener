@@ -251,13 +251,34 @@ def _call_gemini_or_none(text: str) -> Optional[Dict[str, Any]]:
         return None
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            generation_config={"temperature": 0.1,
-             "response_mime_type": "application/json",
-             "max_output_tokens" : llm_max_tokens
-            }
-        )
+        
+        # Try different model names
+        model_names_to_try = [
+            "gemini-1.5-flash",
+            "gemini-1.5-flash-002",
+            "gemini-pro"
+        ]
+        
+        model = None
+        for model_name in model_names_to_try:
+            try:
+                model = genai.GenerativeModel(
+                    model_name=model_name,
+                    generation_config={
+                        "temperature": 0.1,
+                        "response_mime_type": "application/json",
+                        "max_output_tokens": llm_max_tokens
+                    }
+                )
+                logger.info(f"✅ Gemini model loaded for parsing: {model_name}")
+                break
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to load {model_name}: {e}")
+                continue
+        
+        if not model:
+            logger.error("❌ All Gemini model names failed for parsing")
+            return None
         resp = model.generate_content(_prompt(text))
         content = getattr(resp, "text", None) or "{}"
         try:
@@ -334,31 +355,49 @@ def _call_hf_or_none(text: str) -> Optional[Dict[str, Any]]:
         return None
 
 def _call_any_llm_or_none(text: str) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+    logger.info(f"🔄 Trying LLM providers in order: {llm_provider_order}")
+    
     for name in llm_provider_order:
-        if name == 'gemini' :
+        logger.info(f"🤖 Attempting provider: {name.upper()}")
+        result = None
+        
+        if name == 'gemini':
             for attempt in range(3):
                 result = _call_gemini_or_none(text)
                 if result is not None:
-                    break;
-                elif attempt <2:
-                    time.sleep(1*(2**attempt)) 
+                    logger.info(f"✅ GEMINI succeeded on attempt {attempt + 1}")
+                    break
+                elif attempt < 2:
+                    logger.warning(f"⚠️ Gemini attempt {attempt + 1}/3 failed, retrying...")
+                    time.sleep(1*(2**attempt))
+                    
         elif name == "groq":
             for attempt in range(3):
                 result = _call_groq_or_none(text)
                 if result is not None:
-                    break;
-                elif attempt <2:
-                    time.sleep(1*(2**attempt)) 
+                    logger.info(f"✅ GROQ succeeded on attempt {attempt + 1}")
+                    break
+                elif attempt < 2:
+                    logger.warning(f"⚠️ Groq attempt {attempt + 1}/3 failed, retrying...")
+                    time.sleep(1*(2**attempt))
+                    
         elif name == "huggingface":
             for attempt in range(3):
                 result = _call_hf_or_none(text)
                 if result is not None:
-                    break;
-                elif attempt <2:
-                    time.sleep(1*(2**attempt)) 
+                    logger.info(f"✅ HUGGINGFACE succeeded on attempt {attempt + 1}")
+                    break
+                elif attempt < 2:
+                    logger.warning(f"⚠️ HuggingFace attempt {attempt + 1}/3 failed, retrying...")
+                    time.sleep(1*(2**attempt))
 
         if result is not None:
-            return result,name
+            logger.info(f"🎉 Final result from: {name.upper()}")
+            return result, name
+        else:
+            logger.warning(f"❌ {name.upper()} failed after all attempts")
+            
+    logger.error("❌ All LLM providers failed")
     return None, None
 
 def parse_resume_llm(req: ParseResumeRequest) -> Tuple[ParsedResume, Dict[str, Any]]:
@@ -386,13 +425,17 @@ def parse_resume_llm(req: ParseResumeRequest) -> Tuple[ParsedResume, Dict[str, A
     start_time = time.time()
     llm_obj, provider = _call_any_llm_or_none(text or "")
     metadata["processing_time"] = time.time() - start_time
+    
     if llm_obj is not None:
         norm = _normalize(llm_obj)
         metadata["successful_provider"] = provider
+        logger.info(f"🎉 Resume parsed using: {provider.upper()} (took {metadata['processing_time']:.2f}s)")
     else:
+        logger.warning("⚠️ All LLM providers failed - using REGEX fallback")
         norm = light_regex_parse(text or "")
         metadata["successful_provider"]= "regex"
         metadata["fallback_used"] = True
+        logger.info(f"📝 Resume parsed using: REGEX FALLBACK (took {metadata['processing_time']:.2f}s)")
 
     return ParsedResume(
         name=norm["name"],

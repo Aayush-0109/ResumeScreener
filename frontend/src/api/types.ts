@@ -167,6 +167,7 @@ export interface ListJobsQuery {
     page?: number;
     limit?: number;
     q?: string;
+    sort?: string; // Format: "field:order,field:order" (e.g., "createdAt:desc,title:asc")
 }
 
 export interface ListResumesQuery {
@@ -180,6 +181,6 @@ export interface ListResumesQuery {
 export interface ListMatchesQuery {
     page?: number;
     limit?: number;
-    sortField?: 'overallMatchScore' | 'skillsMatchScore' | 'experienceMatchScore' | 'educationMatchScore' | 'technicalMatchScore' | 'matchedAt';
+    sortField?: 'overallMatchScore' | 'skillsMatchScore' | 'experienceMatchScore' | 'educationMatchScore' | 'technicalMatchScore' | 'culturalFitMatchScore' | 'biasMatchScore' | 'matchedAt';
     sortOrder?: 'asc' | 'desc';
 }

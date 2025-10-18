@@ -21,7 +21,7 @@ interface AuthStore {
 export const useAuthStore = create<AuthStore>()(
     persist(
         devtools(
-            (set, get) => ({
+            (set) => ({
                 user: null,
                 isAuthenticated: false,
                 isLoading: false,
