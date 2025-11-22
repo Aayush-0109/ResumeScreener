@@ -60,7 +60,7 @@ export const ParseProgressModal: React.FC<ParseProgressModalProps> = ({
             case 'PENDING':
                 return (
                     <svg
-                        className="animate-spin h-8 w-8 text-blue-600"
+                        className="animate-spin h-8 w-8 text-[#111a2b]"
                         fill="none"
                         viewBox="0 0 24 24"
                     >
@@ -82,7 +82,7 @@ export const ParseProgressModal: React.FC<ParseProgressModalProps> = ({
             case 'PROCESSING':
                 return (
                     <svg
-                        className="animate-spin h-8 w-8 text-blue-600"
+                        className="animate-spin h-8 w-8 text-[#111a2b]"
                         fill="none"
                         viewBox="0 0 24 24"
                     >
