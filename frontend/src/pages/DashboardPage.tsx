@@ -35,7 +35,7 @@ export default function DashboardPage() {
     const { user } = useAuthStore();
     const { openModal } = useUIStore();
 
-    
+
     const {
         resumes,
         pagination: resumePagination,
@@ -48,7 +48,7 @@ export default function DashboardPage() {
         buildQueryAndFetch: fetchJobs
     } = useJobStore();
 
-    
+
     const [stats, setStats] = useState<DashboardStats>({
         totalResumes: 0,
         parsedResumes: 0,
@@ -62,7 +62,7 @@ export default function DashboardPage() {
     const [activities, setActivities] = useState<ActivityItem[]>([]);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-    
+
     useEffect(() => {
         const loadDashboardData = async () => {
             try {
@@ -81,7 +81,7 @@ export default function DashboardPage() {
         loadDashboardData();
     }, []);
 
-    
+
     useEffect(() => {
         if (resumes.length > 0 || jobs.length > 0) {
             const parsedCount = resumes.filter(r => r.parseStatus === 'DONE').length;
@@ -94,20 +94,20 @@ export default function DashboardPage() {
                 pendingResumes: pendingCount,
                 failedResumes: failedCount,
                 totalJobs: jobPagination.total || jobs.length,
-                recentMatches: 0, 
+                recentMatches: 0,
                 avgMatchScore: 0
             });
 
-            
+
             generateActivityFeed();
         }
     }, [resumes, jobs, resumePagination, jobPagination]);
 
-    
+
     const generateActivityFeed = () => {
         const newActivities: ActivityItem[] = [];
 
-        
+
         resumes
             .slice(0, 5)
             .forEach((resume) => {
@@ -121,7 +121,7 @@ export default function DashboardPage() {
                 });
             });
 
-        
+
         jobs
             .slice(0, 5)
             .forEach((job) => {
@@ -135,13 +135,13 @@ export default function DashboardPage() {
                 });
             });
 
-        
+
         newActivities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
         setActivities(newActivities.slice(0, 10));
     };
 
-    
+
     const handleUploadResumes = () => {
         navigate('/resumes', { state: { openUploadModal: true } });
     };
@@ -155,7 +155,7 @@ export default function DashboardPage() {
         navigate('/match');
     };
 
-    
+
     const getGreeting = () => {
         const hour = new Date().getHours();
         if (hour < 12) return 'Good morning';
@@ -163,7 +163,7 @@ export default function DashboardPage() {
         return 'Good evening';
     };
 
-    
+
     const getStatusIcon = (status?: string) => {
         switch (status) {
             case 'success':
@@ -186,7 +186,7 @@ export default function DashboardPage() {
                 );
             default:
                 return (
-                    <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
                 );
@@ -199,17 +199,17 @@ export default function DashboardPage() {
 
     return (
         <div className="space-y-6">
-            {}
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-lg shadow-lg p-8 text-white">
+            { }
+            <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 rounded-lg shadow-lg p-8 text-white">
                 <h1 className="text-3xl font-bold mb-2">
                     {getGreeting()}, {user?.name || 'User'}! 👋
                 </h1>
-                <p className="text-blue-100 text-lg">
+                <p className="text-gray-300 text-lg">
                     Welcome to your AI-powered recruitment dashboard
                 </p>
             </div>
 
-            {}
+            { }
             <Card className="p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -219,10 +219,10 @@ export default function DashboardPage() {
                         size="lg"
                         className="h-24 flex flex-col items-center justify-center"
                     >
-                        <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-8 h-8 mb-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
-                        Upload Resumes
+                        <span className="text-white">Upload Resumes</span>
                     </Button>
 
                     <Button
@@ -252,13 +252,13 @@ export default function DashboardPage() {
                 </div>
             </Card>
 
-            {}
+            { }
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {}
+                { }
                 <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/resumes')}>
                     <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-blue-100 rounded-lg">
-                            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="p-3 bg-gray-100 rounded-lg">
+                            <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                         </div>
@@ -288,7 +288,7 @@ export default function DashboardPage() {
                     )}
                 </Card>
 
-                {}
+                { }
                 <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/jobs')}>
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-purple-100 rounded-lg">
@@ -304,7 +304,7 @@ export default function DashboardPage() {
                     </div>
                 </Card>
 
-                {}
+                { }
                 <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/jobs')}>
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-green-100 rounded-lg">
@@ -320,7 +320,7 @@ export default function DashboardPage() {
                     </div>
                 </Card>
 
-                {}
+                { }
                 <Card className="p-6">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-yellow-100 rounded-lg">
@@ -338,7 +338,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {}
+                { }
                 <Card className="p-6">
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-xl font-semibold text-gray-900">Recent Activity</h2>
@@ -376,7 +376,7 @@ export default function DashboardPage() {
                     )}
                 </Card>
 
-                {}
+                { }
                 <Card className="p-6">
                     <h2 className="text-xl font-semibold text-gray-900 mb-4">Getting Started</h2>
                     <div className="space-y-4">
@@ -451,11 +451,11 @@ export default function DashboardPage() {
                 </Card>
             </div>
 
-            {}
-            <Card className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+            { }
+            <Card className="p-6 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-200 border border-gray-200">
                 <div className="flex items-start gap-4">
                     <div className="flex-shrink-0">
-                        <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                         </svg>
                     </div>
@@ -463,19 +463,19 @@ export default function DashboardPage() {
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">💡 Pro Tips</h3>
                         <ul className="space-y-2 text-sm text-gray-700">
                             <li className="flex items-start gap-2">
-                                <span className="text-blue-600 mt-0.5">•</span>
+                                <span className="text-gray-700 mt-0.5">•</span>
                                 <span>Upload multiple resumes at once for faster processing</span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-blue-600 mt-0.5">•</span>
+                                <span className="text-gray-700 mt-0.5">•</span>
                                 <span>Use specific skills and requirements in job descriptions for better matching accuracy</span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-blue-600 mt-0.5">•</span>
+                                <span className="text-gray-700 mt-0.5">•</span>
                                 <span>Adjust matching weights to prioritize what matters most for each position</span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-blue-600 mt-0.5">•</span>
+                                <span className="text-gray-700 mt-0.5">•</span>
                                 <span>Export match results to share with your team or integrate with your ATS</span>
                             </li>
                         </ul>

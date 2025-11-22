@@ -87,7 +87,7 @@ Scoring Weights:
 """
     
     return f"""
-You are an expert recruiter and technical interviewer. Analyze the job requirements against each resume and provide detailed matching scores.
+You are an expert recruiter and technical interviewer. Analyze the job requirements against each resume and provide detailed matching scores. Treat each request as completely independent; never reuse knowledge from earlier prompts or prior candidates.
 
 {job_desc}
 

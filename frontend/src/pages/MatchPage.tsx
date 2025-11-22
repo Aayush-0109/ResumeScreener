@@ -127,8 +127,11 @@ export default function MatchPage() {
               Create a job first before running a match
             </p>
             <div className="mt-6">
-              <Button onClick={() => navigate('/jobs')}>
-                Go to Jobs
+              <Button
+                className="text-white border border-white/20 px-6"
+                onClick={() => navigate('/jobs')}
+              >
+                <span className="text-white font-medium">Go to Jobs</span>
               </Button>
             </div>
           </Card>

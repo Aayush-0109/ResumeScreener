@@ -232,6 +232,7 @@ export default function ResumesPage() {
                         variant="secondary"
                         onClick={() => openModal('upload-resumes')}
                         disabled={isMutating}
+                        className="text-gray-800"
                     >
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -367,8 +368,13 @@ export default function ResumesPage() {
                             {activeFilterCount > 0 ? "Try adjusting your filters" : "Upload your first resume to get started"}
                         </p>
                         <div className="mt-6">
-                            <Button onClick={activeFilterCount > 0 ? clearFilters : () => openModal('upload-resumes')}>
-                                {activeFilterCount > 0 ? "Clear Filters" : "Upload Resume"}
+                            <Button
+                                className="text-white border border-white/20 px-6"
+                                onClick={activeFilterCount > 0 ? clearFilters : () => openModal('upload-resumes')}
+                            >
+                                <span className="text-white font-medium">
+                                    {activeFilterCount > 0 ? "Clear Filters" : "Upload Resume"}
+                                </span>
                             </Button>
                         </div>
                     </div>
