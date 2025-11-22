@@ -1,0 +1,90 @@
+services:
+   siftly_postgres:
+      image: postgres:16-alpine
+      container_name: siftly_postgres
+      env_file:
+         - .env.postgres
+      volumes:
+         - siftly_pgdata:/var/lib/postgresql/data
+      ports:
+         - "5432:5432"
+      restart: unless-stopped
+      healthcheck:
+         test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+         interval: 10s
+         timeout: 5s
+         retries: 5
+      networks:
+         - siftly_network
+
+   siftly_python_api:
+      build:
+         context: ../ai-service
+         dockerfile: Dockerfile
+         target: production
+      container_name: siftly_python_api
+      env_file:
+         - .env.python
+      ports:
+         - "8000:8000"
+      restart: unless-stopped
+      healthcheck:
+         test: [ "CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')" ]
+         interval: 30s
+         timeout: 10s
+         retries: 3
+         start_period: 40s
+      networks:
+         - siftly_network
+      deploy:
+         resources:
+            limits:
+               cpus: '1'
+               memory: 2G
+            reservations:
+               cpus: '0.5'
+               memory: 1G
+
+   siftly_node_api:
+      build:
+         context: ../backend
+         dockerfile: Dockerfile
+         target: production
+      container_name: siftly_node_api
+      depends_on:
+         siftly_postgres:
+            condition: service_healthy
+         siftly_python_api:
+            condition: service_healthy
+      env_file:
+         - .env.node
+      environment:
+         - NODE_ENV=development
+      ports:
+         - "3000:3000"
+         - "5555:5555"
+      restart: unless-stopped
+      healthcheck:
+         test: [ "CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health')" ]
+         interval: 30s
+         timeout: 10s
+         retries: 3
+         start_period: 60s
+      networks:
+         - siftly_network
+      deploy:
+         resources:
+            limits:
+               cpus: '1'
+               memory: 1G
+            reservations:
+               cpus: '0.5'
+               memory: 512M
+
+volumes:
+   siftly_pgdata:
+
+
+networks:
+   siftly_network:
+      driver: bridge

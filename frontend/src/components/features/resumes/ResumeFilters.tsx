@@ -32,7 +32,7 @@ export const ResumeFilters: React.FC<ResumeFiltersProps> = ({
     const [skillInput, setSkillInput] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
 
-    // Filter available skills based on input
+    
     const filteredSuggestions = availableSkills.filter(
         (skill) =>
             skill.toLowerCase().includes(skillInput.toLowerCase()) &&
@@ -99,7 +99,7 @@ export const ResumeFilters: React.FC<ResumeFiltersProps> = ({
                     )}
                 </div>
 
-                {/* Skills Filter (Backend) */}
+                {}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         Skills <span className="text-xs text-gray-500">(Backend Filter)</span>
@@ -122,7 +122,7 @@ export const ResumeFilters: React.FC<ResumeFiltersProps> = ({
                             className="input w-full"
                         />
 
-                        {/* Autocomplete suggestions */}
+                        {}
                         {showSuggestions && filteredSuggestions.length > 0 && skillInput && (
                             <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-auto">
                                 {filteredSuggestions.map((skill) => (
@@ -139,7 +139,7 @@ export const ResumeFilters: React.FC<ResumeFiltersProps> = ({
                         )}
                     </div>
 
-                    {/* Selected skills */}
+                    {}
                     {filters.skills.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-2">
                             {filters.skills.map((skill) => (
@@ -162,7 +162,7 @@ export const ResumeFilters: React.FC<ResumeFiltersProps> = ({
                     )}
                 </div>
 
-                {/* Experience Range (Backend) */}
+                {}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         Experience Range (years){' '}
@@ -204,7 +204,7 @@ export const ResumeFilters: React.FC<ResumeFiltersProps> = ({
                     </div>
                 </div>
 
-                {/* Parse Status (Client-side) */}
+                {}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         Parse Status{' '}
@@ -232,7 +232,7 @@ export const ResumeFilters: React.FC<ResumeFiltersProps> = ({
                     </div>
                 </div>
 
-                {/* Action Buttons */}
+                {}
                 <div className="flex gap-3 pt-4 border-t border-gray-200">
                     <Button variant="primary" onClick={handleApply} fullWidth>
                         Apply Filters

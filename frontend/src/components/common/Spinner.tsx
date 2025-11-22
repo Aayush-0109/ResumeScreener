@@ -53,9 +53,7 @@ export const Spinner: React.FC<SpinnerProps> = ({
     );
 };
 
-/**
- * Full page spinner for page-level loading states
- */
+
 export const PageSpinner: React.FC<{ label?: string }> = ({ label }) => {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -64,9 +62,7 @@ export const PageSpinner: React.FC<{ label?: string }> = ({ label }) => {
     );
 };
 
-/**
- * Inline spinner for button/component loading states
- */
+
 export const InlineSpinner: React.FC<{ className?: string }> = ({ className }) => {
     return (
         <svg

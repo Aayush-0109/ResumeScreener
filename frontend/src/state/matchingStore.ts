@@ -3,9 +3,7 @@ import { devtools, persist } from 'zustand/middleware';
 import MatchingService, { type MatchSortField, type MatchSortOrder } from '../services/matchingService';
 import type { MatchResult, MatchOptions, ListMatchesQuery, PaginationMeta, MatchQueueStatus } from '../api/types';
 
-/**
- * Match filter state (client-side)
- */
+
 export interface MatchFilters {
     scoreThresholds?: {
         overall?: number;
@@ -19,17 +17,13 @@ export interface MatchFilters {
     minEducationQuality?: 'Perfect' | 'Good' | 'Fair';
 }
 
-/**
- * Match sort state (backend)
- */
+
 export interface MatchSortState {
     field: MatchSortField;
     order: MatchSortOrder;
 }
 
-/**
- * Last used match configuration
- */
+
 export interface MatchConfig {
     topN?: number;
     weights?: {
@@ -42,54 +36,54 @@ export interface MatchConfig {
 }
 
 interface MatchingStore {
-    // Data
+
     matches: MatchResult[];
-    filteredMatches: MatchResult[]; // After applying client-side filters
+    filteredMatches: MatchResult[];
     pagination: PaginationMeta;
     matchQueue: MatchQueueStatus | null;
 
-    // Loading states
+
     isLoading: boolean;
     isMutating: boolean;
     error: string | null;
 
-    // Filter & Sort state
+
     filters: MatchFilters;
     sortState: MatchSortState;
 
-    // Active match jobs tracking
+
     activeMatchJobs: Map<string, MatchQueueStatus>;
 
-    // Last used config (for quick re-run)
-    lastConfig: MatchConfig | null;
-    currentJobId: string | null; // For the current results being viewed
 
-    // Actions
+    lastConfig: MatchConfig | null;
+    currentJobId: string | null;
+
+
     enqueueMatch: (jobId: string, options?: MatchOptions) => Promise<string>;
     checkMatchStatus: (queueId: string) => Promise<void>;
     fetchMatches: (jobId: string, query?: ListMatchesQuery) => Promise<void>;
     clearMatches: (jobId: string) => Promise<void>;
     exportMatches: (jobId: string, format: 'csv' | 'json') => Promise<void>;
 
-    // Filter & Sort actions
+
     setFilters: (filters: Partial<MatchFilters>) => void;
     clearFilters: () => void;
     setSortState: (sortState: MatchSortState) => void;
     applyClientSideFilters: () => void;
     buildQueryAndFetch: (jobId: string) => Promise<void>;
 
-    // Match job tracking
+
     addMatchJob: (queueId: string, status: MatchQueueStatus) => void;
     updateMatchJob: (queueId: string, status: MatchQueueStatus) => void;
     removeMatchJob: (queueId: string) => void;
     getMatchJob: (queueId: string) => MatchQueueStatus | undefined;
 
-    // Config management
+
     saveConfig: (config: MatchConfig) => void;
     getLastConfig: () => MatchConfig | null;
     setCurrentJobId: (jobId: string | null) => void;
 
-    // Analytics
+
     getScoreDistribution: () => { excellent: number; good: number; fair: number; poor: number };
     getAverageScore: () => number;
     getMostCommonMissingSkills: (topN?: number) => Array<{ skill: string; count: number }>;
@@ -108,7 +102,7 @@ export const useMatchingStore = create<MatchingStore>()(
     persist(
         devtools(
             (set, get) => ({
-                // Initial state
+
                 matches: [],
                 filteredMatches: [],
                 pagination: {},
@@ -131,7 +125,7 @@ export const useMatchingStore = create<MatchingStore>()(
                                 isMutating: false,
                                 currentJobId: jobId
                             });
-                            // Save config for re-use
+
                             if (options) {
                                 get().saveConfig(options);
                             }
@@ -166,17 +160,20 @@ export const useMatchingStore = create<MatchingStore>()(
                     try {
                         const response = await MatchingService.listMatches(jobId, query);
                         if (response.success && response.data) {
+                            const matches = Array.isArray(response.data) ? response.data : (response.data.data || []);
+                            const meta = (response.data as any).meta || {};
+
                             set({
-                                matches: response.data.data,
+                                matches: matches,
                                 pagination: {
-                                    page: response.data.page,
-                                    limit: response.data.limit,
-                                    total: response.data.total,
-                                    totalPages: response.data.totalPages
+                                    page: meta.page || 1,
+                                    limit: meta.limit || 10,
+                                    total: meta.total || matches.length,
+                                    totalPages: meta.totalPages || 1
                                 },
                                 isLoading: false
                             });
-                            // Apply client-side filters
+
                             get().applyClientSideFilters();
                         }
                     } catch (error: any) {
@@ -220,7 +217,7 @@ export const useMatchingStore = create<MatchingStore>()(
                     }
                 },
 
-                // Filter & Sort actions
+
                 setFilters: (filters) => {
                     set((state) => ({
                         filters: { ...state.filters, ...filters }
@@ -241,22 +238,22 @@ export const useMatchingStore = create<MatchingStore>()(
                     const { matches, filters } = get();
                     let filtered = [...matches];
 
-                    // Apply score threshold filters
+
                     if (filters.scoreThresholds) {
                         filtered = MatchingService.filterByScoreThresholds(filtered, filters.scoreThresholds);
                     }
 
-                    // Apply required skills filter
+
                     if (filters.requiredSkills && filters.requiredSkills.length > 0) {
                         filtered = MatchingService.filterByMatchedSkills(filtered, filters.requiredSkills);
                     }
 
-                    // Apply experience gap filter
+
                     if (filters.maxExperienceGap !== undefined) {
                         filtered = MatchingService.filterByExperienceGap(filtered, filters.maxExperienceGap);
                     }
 
-                    // Apply education quality filter
+
                     if (filters.minEducationQuality) {
                         filtered = MatchingService.filterByEducationMatch(filtered, filters.minEducationQuality);
                     }
@@ -269,13 +266,13 @@ export const useMatchingStore = create<MatchingStore>()(
                     const query = MatchingService.buildQueryWithSort(
                         sortState.field,
                         sortState.order,
-                        1, // Reset to page 1 when changing sort
+                        1,
                         10
                     );
                     await get().fetchMatches(jobId, query);
                 },
 
-                // Match job tracking
+
                 addMatchJob: (queueId, status) => {
                     set((state) => {
                         const newJobs = new Map(state.activeMatchJobs);
@@ -304,7 +301,7 @@ export const useMatchingStore = create<MatchingStore>()(
                     return get().activeMatchJobs.get(queueId);
                 },
 
-                // Config management
+
                 saveConfig: (config) => {
                     set({ lastConfig: config });
                 },
@@ -317,7 +314,7 @@ export const useMatchingStore = create<MatchingStore>()(
                     set({ currentJobId: jobId });
                 },
 
-                // Analytics
+
                 getScoreDistribution: () => {
                     const { filteredMatches } = get();
                     return MatchingService.getScoreDistribution(filteredMatches);

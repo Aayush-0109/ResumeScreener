@@ -9,7 +9,7 @@ export type Env = z.infer<typeof EnvSchema>;
 export function getEnv(): Env {
     const parsed = EnvSchema.safeParse(import.meta.env);
     if (!parsed.success) {
-        // eslint-disable-next-line no-console
+        
         console.error('Invalid environment variables', parsed.error.flatten());
         throw new Error('Invalid environment variables');
     }

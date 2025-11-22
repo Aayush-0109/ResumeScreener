@@ -24,7 +24,7 @@ export const MatchProgressModal: React.FC<MatchProgressModalProps> = ({
 }) => {
     const navigate = useNavigate();
 
-    // Debug logs
+    
     console.log('🔍 MatchProgressModal rendered - isOpen:', isOpen, 'queueId:', queueId);
 
     const { data: matchStatus, isPolling, stopPolling, resetPolling } = usePolling(
@@ -45,18 +45,18 @@ export const MatchProgressModal: React.FC<MatchProgressModalProps> = ({
             return shouldStop;
         },
         {
-            interval: 5000, // Poll every 5 seconds to reduce server load
+            interval: 5000, 
             enabled: isOpen && !!queueId,
             onSuccess: (data) => {
                 console.log('🎉 onSuccess called with status:', data?.status);
 
-                // Stop polling immediately
+                
                 stopPolling();
 
                 if (data?.status === 'COMPLETED') {
                     toast.success('Matching completed successfully!', { id: `match-complete-${queueId}` });
 
-                    // Close modal and navigate after a short delay
+                    
                     setTimeout(() => {
                         onClose();
                         navigate(`/results/${jobId}`);
@@ -69,13 +69,13 @@ export const MatchProgressModal: React.FC<MatchProgressModalProps> = ({
             },
             onError: (err) => {
                 console.error('Polling error:', err);
-                // Only show error toast once per queue ID
+                
                 toast.error('Failed to check matching status', { id: `match-poll-error-${queueId}` });
             },
         }
     );
 
-    // Cleanup polling when modal closes
+    
     React.useEffect(() => {
         if (!isOpen) {
             console.log('🧹 Modal closed - stopping polling');

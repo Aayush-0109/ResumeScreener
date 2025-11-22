@@ -4,7 +4,7 @@ import clsx from 'clsx';
 type Props = {
     multiple?: boolean;
     accept?: string;
-    maxSize?: number; // in MB
+    maxSize?: number; 
     onFiles: (files: FileList) => void;
     onError?: (error: string) => void;
     disabled?: boolean;
@@ -30,7 +30,7 @@ export default function FileUpload({
         const fileArray = Array.from(files);
         const errors: string[] = [];
 
-        // Validate files
+        
         fileArray.forEach(file => {
             if (maxSize && file.size > maxSize * 1024 * 1024) {
                 errors.push(`${file.name} is too large (max ${maxSize}MB)`);
@@ -67,7 +67,7 @@ export default function FileUpload({
         const newFiles = selectedFiles.filter((_, i) => i !== index);
         setSelectedFiles(newFiles);
 
-        // Create new FileList-like object
+        
         const dt = new DataTransfer();
         newFiles.forEach(file => dt.items.add(file));
         onFiles(dt.files);

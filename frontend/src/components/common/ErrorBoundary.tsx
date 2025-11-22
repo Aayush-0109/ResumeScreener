@@ -12,14 +12,7 @@ interface State {
     error: Error | null;
 }
 
-/**
- * Error Boundary component to catch React errors
- * 
- * @example
- * <ErrorBoundary fallback={<ErrorFallback />}>
- *   <App />
- * </ErrorBoundary>
- */
+
 export class ErrorBoundary extends Component<Props, State> {
     constructor(props: Props) {
         super(props);
@@ -40,8 +33,8 @@ export class ErrorBoundary extends Component<Props, State> {
         console.error('Error Boundary caught an error:', error, errorInfo);
         this.props.onError?.(error, errorInfo);
 
-        // Log to monitoring service (Sentry, etc.)
-        // logErrorToService(error, errorInfo);
+        
+        
     }
 
     handleReset = () => {
@@ -111,9 +104,7 @@ export class ErrorBoundary extends Component<Props, State> {
     }
 }
 
-/**
- * Higher-order component to wrap components with error boundary
- */
+
 export function withErrorBoundary<P extends object>(
     Component: React.ComponentType<P>,
     fallback?: ReactNode

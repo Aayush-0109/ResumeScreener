@@ -4,19 +4,20 @@ import { useJobStore } from '../state/jobStore';
 import { useUIStore } from '../state/uiStore';
 import { JobCard } from '../components/features/jobs/JobCard';
 import { JobForm } from '../components/features/jobs/JobForm';
-import { Button } from '../components/common/Button';
-import { Modal, ModalFooter } from '../components/common/Modal';
-import { Card } from '../components/common/Card';
-import { Pagination } from '../components/common/Pagination';
-import { PageSpinner, Spinner } from '../components/common/Spinner';
+import { Button } from '../components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '../components/ui/pagination';
+import { Skeleton } from '../components/ui/skeleton';
 import toast from 'react-hot-toast';
 import { useDebounce } from '../hooks/useDebounce';
 import type { CreateJobData, Job } from '../api/types';
+import { Plus, Search, Briefcase, CheckCircle2, Clock } from 'lucide-react';
 
 export default function JobsPage() {
     const navigate = useNavigate();
 
-    // Store state
     const {
         jobs,
         pagination,
@@ -36,15 +37,15 @@ export default function JobsPage() {
 
     const { openModal, closeModal, isModalOpen } = useUIStore();
 
-    // Local state
+    
     const [searchInput, setSearchInput] = useState(queryState.searchQuery);
     const [editingJob, setEditingJob] = useState<Job | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
 
-    // Debounce search input
+    
     const debouncedSearch = useDebounce(searchInput, 500);
 
-    // Sort options for dropdown
+    
     const sortOptions = [
         { value: 'newest', label: 'Newest First', field: 'createdAt' as const, order: 'desc' as const },
         { value: 'oldest', label: 'Oldest First', field: 'createdAt' as const, order: 'asc' as const },
@@ -53,12 +54,12 @@ export default function JobsPage() {
         { value: 'title-desc', label: 'Title (Z-A)', field: 'title' as const, order: 'desc' as const }
     ];
 
-    // Initial fetch
+    
     useEffect(() => {
         buildQueryAndFetch();
-    }, []);
+    }, []); 
 
-    // Handle search changes
+    
     useEffect(() => {
         if (debouncedSearch !== queryState.searchQuery) {
             setSearchQuery(debouncedSearch);
@@ -66,7 +67,7 @@ export default function JobsPage() {
         }
     }, [debouncedSearch]);
 
-    // Handle errors
+    
     useEffect(() => {
         if (error) {
             toast.error(error);
@@ -74,7 +75,7 @@ export default function JobsPage() {
         }
     }, [error, clearError]);
 
-    // Get current sort value for dropdown
+    
     const getCurrentSortValue = () => {
         const currentSort = queryState.sortOptions[0];
         if (!currentSort) return 'newest';
@@ -85,7 +86,7 @@ export default function JobsPage() {
         return option?.value || 'newest';
     };
 
-    // Handle sort change
+    
     const handleSortChange = (value: string) => {
         const option = sortOptions.find(opt => opt.value === value);
         if (option) {
@@ -94,13 +95,13 @@ export default function JobsPage() {
         }
     };
 
-    // Handle page change
+    
     const handlePageChange = (page: number) => {
         setPage(page);
         buildQueryAndFetch();
     };
 
-    // Handle create job
+    
     const handleCreateJob = async (data: CreateJobData) => {
         try {
             await createJob(data);
@@ -112,7 +113,7 @@ export default function JobsPage() {
         }
     };
 
-    // Handle edit job
+    
     const handleEditJob = async (data: Partial<CreateJobData>) => {
         if (!editingJob) return;
 
@@ -128,7 +129,7 @@ export default function JobsPage() {
         }
     };
 
-    // Handle delete job
+    
     const handleDeleteJob = async (id: string) => {
         try {
             await deleteJob(id);
@@ -140,17 +141,12 @@ export default function JobsPage() {
         }
     };
 
-    // Handle match navigation
+    
     const handleMatchJob = (jobId: string) => {
         navigate(`/match?jobId=${jobId}`);
     };
 
-    // Handle view matches
-    const handleViewMatches = (jobId: string) => {
-        navigate(`/results/${jobId}`);
-    };
-
-    // Calculate stats
+    
     const stats = {
         total: pagination.total || 0,
         active: jobs.length,
@@ -160,190 +156,203 @@ export default function JobsPage() {
     };
 
     if (isLoading && jobs.length === 0) {
-        return <PageSpinner label="Loading jobs..." />;
+        return (
+            <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                    <Skeleton className="h-10 w-48" />
+                    <Skeleton className="h-10 w-32" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <Skeleton className="h-64 w-full" />
+                    <Skeleton className="h-64 w-full" />
+                    <Skeleton className="h-64 w-full" />
+                </div>
+            </div>
+        );
     }
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex justify-between items-start">
+        <div className="space-y-8">
+            {}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Job Positions</h1>
-                    <p className="text-gray-600 mt-1">Manage and view your job openings</p>
+                    <p className="text-muted-foreground mt-1">Manage and track your open roles</p>
                 </div>
-                <Button onClick={() => openModal('create-job')}>
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
+                <Button onClick={() => openModal('create-job')} className="gap-2">
+                    <Plus className="h-4 w-4" />
                     Create Job
                 </Button>
             </div>
 
-            {/* Stats Cards */}
+            {}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white rounded-lg shadow p-6">
-                    <div className="flex items-center">
-                        <div className="flex-shrink-0 bg-primary-100 rounded-lg p-3">
-                            <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0H8m8 0v2a2 2 0 002 2h2a2 2 0 002-2V8a2 2 0 00-2-2h-2z" />
-                            </svg>
+                <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
+                            <Briefcase className="h-6 w-6" />
                         </div>
-                        <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-500">Total Jobs</p>
-                            <p className="text-2xl font-semibold text-gray-900">{stats.total}</p>
+                        <div>
+                            <p className="text-sm font-medium text-muted-foreground">Total Jobs</p>
+                            <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow p-6">
-                    <div className="flex items-center">
-                        <div className="flex-shrink-0 bg-green-100 rounded-lg p-3">
-                            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-green-50 text-green-600 rounded-lg">
+                            <CheckCircle2 className="h-6 w-6" />
                         </div>
-                        <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-500">Active Listings</p>
-                            <p className="text-2xl font-semibold text-gray-900">{stats.active}</p>
+                        <div>
+                            <p className="text-sm font-medium text-muted-foreground">Active Listings</p>
+                            <p className="text-2xl font-bold text-gray-900">{stats.active}</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow p-6">
-                    <div className="flex items-center">
-                        <div className="flex-shrink-0 bg-purple-100 rounded-lg p-3">
-                            <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
+                <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-purple-50 text-purple-600 rounded-lg">
+                            <Clock className="h-6 w-6" />
                         </div>
-                        <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-500">Avg. Experience</p>
-                            <p className="text-2xl font-semibold text-gray-900">{stats.avgExperience} yrs</p>
+                        <div>
+                            <p className="text-sm font-medium text-muted-foreground">Avg. Experience</p>
+                            <p className="text-2xl font-bold text-gray-900">{stats.avgExperience} yrs</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Search & Sort Bar */}
+            {}
             <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </div>
-                        <input
-                            type="text"
-                            placeholder="Search jobs by title, description, or requirements..."
-                            value={searchInput}
-                            onChange={(e) => setSearchInput(e.target.value)}
-                            className="input pl-10 w-full"
-                        />
-                        {searchInput && (
-                            <button
-                                onClick={() => setSearchInput('')}
-                                className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                            >
-                                <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        )}
-                    </div>
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search jobs by title, description, or requirements..."
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        className="pl-9"
+                    />
                 </div>
 
-                <select
+                <Select
                     value={getCurrentSortValue()}
-                    onChange={(e) => handleSortChange(e.target.value)}
-                    className="input py-2 px-4 w-full sm:w-auto"
+                    onValueChange={handleSortChange}
                 >
-                    {sortOptions.map(option => (
-                        <option key={option.value} value={option.value}>
-                            {option.label}
-                        </option>
-                    ))}
-                </select>
+                    <SelectTrigger className="w-full sm:w-[200px]">
+                        <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {sortOptions.map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
 
-            {/* Job Cards Grid */}
-            {isLoading ? (
-                <div className="flex justify-center items-center py-12">
-                    <Spinner />
-                    <span className="ml-3 text-gray-600">Loading jobs...</span>
-                </div>
-            ) : jobs.length === 0 ? (
-                <Card className="text-center py-12">
+            {}
+            {jobs.length === 0 ? (
+                <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-300">
                     <div className="max-w-md mx-auto">
-                        <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0H8m8 0v2a2 2 0 002 2h2a2 2 0 002-2V8a2 2 0 00-2-2h-2z" />
-                        </svg>
+                        <Briefcase className="mx-auto h-12 w-12 text-gray-400" />
                         <h3 className="mt-4 text-lg font-medium text-gray-900">
                             {searchInput ? 'No jobs found' : 'No jobs yet'}
                         </h3>
-                        <p className="mt-2 text-sm text-gray-500">
+                        <p className="mt-2 text-sm text-muted-foreground">
                             {searchInput
                                 ? "Try adjusting your search query"
                                 : "Create your first job posting to get started"}
                         </p>
                         <div className="mt-6">
-                            <Button onClick={searchInput ? () => setSearchInput('') : () => openModal('create-job')}>
+                            <Button
+                                variant={searchInput ? "outline" : "default"}
+                                onClick={searchInput ? () => setSearchInput('') : () => openModal('create-job')}
+                            >
                                 {searchInput ? "Clear Search" : "Create Job"}
                             </Button>
                         </div>
                     </div>
-                </Card>
+                </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {jobs.map((job) => (
-                        <div key={job.id} className="relative">
-                            <JobCard
-                                job={job}
-                                onEdit={() => {
-                                    setEditingJob(job);
-                                    openModal('edit-job');
-                                }}
-                                onDelete={() => setShowDeleteConfirm(job.id)}
-                                onMatch={() => handleMatchJob(job.id)}
-                            />
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => handleViewMatches(job.id)}
-                                className="mt-2 w-full"
-                            >
-                                View Matches
-                            </Button>
-                        </div>
+                        <JobCard
+                            key={job.id}
+                            job={job}
+                            onEdit={() => {
+                                setEditingJob(job);
+                                openModal('edit-job');
+                            }}
+                            onDelete={() => setShowDeleteConfirm(job.id)}
+                            onMatch={() => handleMatchJob(job.id)}
+                        />
                     ))}
                 </div>
             )}
 
-            {/* Pagination */}
+            {}
             {jobs.length > 0 && pagination.totalPages && pagination.totalPages > 1 && (
-                <Pagination
-                    currentPage={pagination.page || 1}
-                    totalPages={pagination.totalPages}
-                    onPageChange={handlePageChange}
-                />
+                <Pagination>
+                    <PaginationContent>
+                        <PaginationItem>
+                            <PaginationPrevious
+                                onClick={() => handlePageChange((pagination.page || 1) - 1)}
+                                className={pagination.page === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                            />
+                        </PaginationItem>
+                        {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => (
+                            <PaginationItem key={page}>
+                                <PaginationLink
+                                    isActive={page === pagination.page}
+                                    onClick={() => handlePageChange(page)}
+                                    className="cursor-pointer"
+                                >
+                                    {page}
+                                </PaginationLink>
+                            </PaginationItem>
+                        ))}
+                        <PaginationItem>
+                            <PaginationNext
+                                onClick={() => handlePageChange((pagination.page || 1) + 1)}
+                                className={pagination.page === pagination.totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                            />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
             )}
 
-            {/* Create Job Modal */}
-            <Modal isOpen={isModalOpen('create-job')} onClose={() => closeModal('create-job')} title="Create New Job" size="lg">
-                <div className="py-4">
+            {}
+            <Dialog open={isModalOpen('create-job')} onOpenChange={(open) => !open && closeModal('create-job')}>
+                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Create New Job</DialogTitle>
+                    </DialogHeader>
                     <JobForm
                         onSubmit={handleCreateJob}
                         onCancel={() => closeModal('create-job')}
                     />
-                </div>
-            </Modal>
+                </DialogContent>
+            </Dialog>
 
-            {/* Edit Job Modal */}
-            <Modal isOpen={isModalOpen('edit-job')} onClose={() => {
-                closeModal('edit-job');
-                setEditingJob(null);
-            }} title="Edit Job" size="lg">
-                <div className="py-4">
+            {}
+            <Dialog open={isModalOpen('edit-job')} onOpenChange={(open) => {
+                if (!open) {
+                    closeModal('edit-job');
+                    setEditingJob(null);
+                }
+            }}>
+                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Edit Job</DialogTitle>
+                    </DialogHeader>
                     {editingJob && (
                         <JobForm
                             initialData={{
@@ -364,33 +373,34 @@ export default function JobsPage() {
                             submitLabel="Update Job"
                         />
                     )}
-                </div>
-            </Modal>
+                </DialogContent>
+            </Dialog>
 
-            {/* Delete Confirmation Modal */}
-            <Modal
-                isOpen={!!showDeleteConfirm}
-                onClose={() => setShowDeleteConfirm(null)}
-                title="Delete Job"
-            >
-                <div className="py-4">
-                    <p className="text-sm text-gray-600">
-                        Are you sure you want to delete this job? This action cannot be undone and will also delete all associated match results.
-                    </p>
-                </div>
-                <ModalFooter>
-                    <Button variant="secondary" onClick={() => setShowDeleteConfirm(null)}>
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="danger"
-                        onClick={() => showDeleteConfirm && handleDeleteJob(showDeleteConfirm)}
-                        disabled={isMutating}
-                    >
-                        Delete Job
-                    </Button>
-                </ModalFooter>
-            </Modal>
+            {}
+            <Dialog open={!!showDeleteConfirm} onOpenChange={(open) => !open && setShowDeleteConfirm(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Job</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <p className="text-sm text-muted-foreground">
+                            Are you sure you want to delete this job? This action cannot be undone and will also delete all associated match results.
+                        </p>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowDeleteConfirm(null)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={() => showDeleteConfirm && handleDeleteJob(showDeleteConfirm)}
+                            disabled={isMutating}
+                        >
+                            Delete Job
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

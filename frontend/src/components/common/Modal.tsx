@@ -24,7 +24,7 @@ export const Modal: React.FC<ModalProps> = ({
 }) => {
     const modalRef = useRef<HTMLDivElement>(null);
 
-    // Handle escape key
+    
     useEffect(() => {
         if (!closeOnEscape) return;
 
@@ -38,7 +38,7 @@ export const Modal: React.FC<ModalProps> = ({
         return () => document.removeEventListener('keydown', handleEscape);
     }, [isOpen, onClose, closeOnEscape]);
 
-    // Prevent body scroll when modal is open
+    
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
@@ -51,7 +51,7 @@ export const Modal: React.FC<ModalProps> = ({
         };
     }, [isOpen]);
 
-    // Focus trap
+    
     useEffect(() => {
         if (!isOpen) return;
 
@@ -101,7 +101,7 @@ export const Modal: React.FC<ModalProps> = ({
             role="dialog"
             aria-modal="true"
         >
-            {/* Overlay */}
+            {}
             <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
                 <div
                     className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
@@ -109,12 +109,12 @@ export const Modal: React.FC<ModalProps> = ({
                     onClick={closeOnOverlayClick ? onClose : undefined}
                 />
 
-                {/* Centering trick */}
+                {}
                 <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">
                     &#8203;
                 </span>
 
-                {/* Modal panel */}
+                {}
                 <div
                     ref={modalRef}
                     className={clsx(
@@ -122,7 +122,7 @@ export const Modal: React.FC<ModalProps> = ({
                         sizeClasses[size]
                     )}
                 >
-                    {/* Header */}
+                    {}
                     {(title || showCloseButton) && (
                         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                             {title && (
@@ -155,7 +155,7 @@ export const Modal: React.FC<ModalProps> = ({
                         </div>
                     )}
 
-                    {/* Body */}
+                    {}
                     <div className="px-6 py-4">{children}</div>
                 </div>
             </div>
@@ -163,9 +163,7 @@ export const Modal: React.FC<ModalProps> = ({
     );
 };
 
-/**
- * Modal Footer component for actions
- */
+
 export const ModalFooter: React.FC<{ children: React.ReactNode; className?: string }> = ({
     children,
     className,

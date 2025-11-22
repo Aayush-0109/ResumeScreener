@@ -79,11 +79,11 @@ export const MatchFilters: React.FC<MatchFiltersProps> = ({
                     )}
                 </div>
 
-                {/* Score Thresholds */}
+                {}
                 <div>
                     <h4 className="text-sm font-medium text-gray-700 mb-3">Minimum Score Thresholds</h4>
                     <div className="space-y-3">
-                        {/* Overall Score */}
+                        {}
                         <div>
                             <label htmlFor="overall-score" className="block text-sm text-gray-600 mb-1">
                                 Overall Score: {filters.minOverallScore || 0}%
@@ -105,7 +105,7 @@ export const MatchFilters: React.FC<MatchFiltersProps> = ({
                             />
                         </div>
 
-                        {/* Skills Score */}
+                        {}
                         <div>
                             <label htmlFor="skills-score" className="block text-sm text-gray-600 mb-1">
                                 Skills Score: {filters.minSkillsScore || 0}%
@@ -127,7 +127,7 @@ export const MatchFilters: React.FC<MatchFiltersProps> = ({
                             />
                         </div>
 
-                        {/* Experience Score */}
+                        {}
                         <div>
                             <label htmlFor="experience-score" className="block text-sm text-gray-600 mb-1">
                                 Experience Score: {filters.minExperienceScore || 0}%
@@ -151,7 +151,7 @@ export const MatchFilters: React.FC<MatchFiltersProps> = ({
                     </div>
                 </div>
 
-                {/* Experience Gap */}
+                {}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         Experience Gap
@@ -180,7 +180,7 @@ export const MatchFilters: React.FC<MatchFiltersProps> = ({
                     </div>
                 </div>
 
-                {/* Education Match */}
+                {}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         Education Match
@@ -209,7 +209,7 @@ export const MatchFilters: React.FC<MatchFiltersProps> = ({
                     </div>
                 </div>
 
-                {/* Required Matched Skills */}
+                {}
                 {availableSkills.length > 0 && (
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -234,7 +234,7 @@ export const MatchFilters: React.FC<MatchFiltersProps> = ({
                     </div>
                 )}
 
-                {/* Action Buttons */}
+                {}
                 <div className="flex gap-3 pt-4 border-t border-gray-200">
                     <Button variant="primary" onClick={handleApply} fullWidth>
                         Apply Filters

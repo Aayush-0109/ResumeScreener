@@ -36,7 +36,8 @@ export const useAuthStore = create<AuthStore>()(
                             set({
                                 user: response.data as any,
                                 isAuthenticated: true,
-                                isLoading: false
+                                isLoading: false,
+                                bootstrapping: false  
                             });
                         }
                     } catch (error: any) {
@@ -56,7 +57,8 @@ export const useAuthStore = create<AuthStore>()(
                             set({
                                 user: response.data as any,
                                 isAuthenticated: true,
-                                isLoading: false
+                                isLoading: false,
+                                bootstrapping: false  
                             });
                         }
                     } catch (error: any) {
@@ -91,7 +93,7 @@ export const useAuthStore = create<AuthStore>()(
                             set({ user: null, isAuthenticated: false });
                         }
                     } catch (error: any) {
-                        // Stay logged out on failure
+                        
                         set({ user: null, isAuthenticated: false });
                     } finally {
                         set({ isLoading: false, bootstrapping: false });

@@ -51,6 +51,9 @@ export type UploadInput = {
 };
 export type UploadedAsset = {
   fileName: string;
+  fileUrl: string;
+  downloadUrl: string;
+  publicId: string;
   fileSize: number;
   mimeType: string;
 };

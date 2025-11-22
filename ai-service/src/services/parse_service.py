@@ -252,11 +252,11 @@ def _call_gemini_or_none(text: str) -> Optional[Dict[str, Any]]:
     try:
         genai.configure(api_key=api_key)
         
-        # Try different model names
+        # Try different model names (stable versions only)
         model_names_to_try = [
             "gemini-1.5-flash",
-            "gemini-1.5-flash-002",
-            "gemini-pro"
+            "gemini-1.5-pro",
+            "models/gemini-1.5-flash"
         ]
         
         model = None

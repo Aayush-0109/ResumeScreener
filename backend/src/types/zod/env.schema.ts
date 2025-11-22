@@ -6,8 +6,9 @@ export const envSchema = z.object({
 
     DATABASE_URL: z.string().url('Invalid DATABASE_URL'),
 
-    REDIS_HOST: z.string().min(1, 'REDIS_HOST is required'),
-    REDIS_PORT: z.coerce.number().min(1).max(65535),
+    REDIS_URL: z.string().optional(),
+    REDIS_HOST: z.string().optional(),
+    REDIS_PORT: z.coerce.number().min(1).max(65535).optional(),
     REDIS_USERNAME: z.string().optional(),
     REDIS_PASSWORD: z.string().optional(),
 
@@ -16,6 +17,16 @@ export const envSchema = z.object({
 
     AI_SERVICE_URL: z.string().url('Invalid AI_SERVICE_URL'),
 }).superRefine((data, ctx) => {
+    // Validate Redis configuration
+    if (!data.REDIS_URL && !data.REDIS_HOST) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Either REDIS_URL or REDIS_HOST must be provided',
+            path: ['REDIS_URL']
+        });
+    }
+
+    // Production secret validation
     if (data.NODE_ENV === 'production') {
         if (data.ACCESS_TOKEN_SECRET.includes('dev') || data.ACCESS_TOKEN_SECRET.length < 64) {
             ctx.addIssue({

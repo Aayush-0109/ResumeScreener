@@ -24,19 +24,19 @@ export const Pagination: React.FC<PaginationProps> = ({
         const maxVisible = 7;
 
         if (totalPages <= maxVisible) {
-            // Show all pages if total is small
+            
             for (let i = 1; i <= totalPages; i++) {
                 pages.push(i);
             }
         } else {
-            // Always show first page
+            
             pages.push(1);
 
             if (currentPage > 3) {
                 pages.push('...');
             }
 
-            // Show pages around current page
+            
             const start = Math.max(2, currentPage - 1);
             const end = Math.min(totalPages - 1, currentPage + 1);
 
@@ -48,7 +48,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                 pages.push('...');
             }
 
-            // Always show last page
+            
             if (totalPages > 1) {
                 pages.push(totalPages);
             }
@@ -62,7 +62,7 @@ export const Pagination: React.FC<PaginationProps> = ({
 
     return (
         <div className={clsx('flex flex-col sm:flex-row items-center justify-between gap-4', className)}>
-            {/* Results info */}
+            {}
             {totalItems !== undefined && itemsPerPage !== undefined && (
                 <p className="text-sm text-gray-700">
                     Showing <span className="font-medium">{startItem}</span> to{' '}
@@ -71,7 +71,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                 </p>
             )}
 
-            {/* Pagination controls */}
+            {}
             <div className="flex items-center gap-2">
                 <Button
                     variant="secondary"

@@ -75,7 +75,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
     return (
         <>
-            {/* Mobile overlay */}
+            {}
             {isOpen && onClose && (
                 <div
                     className="fixed inset-0 bg-gray-600 bg-opacity-75 z-20 lg:hidden"
@@ -83,14 +83,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
                 />
             )}
 
-            {/* Sidebar */}
+            {}
             <div
                 className={clsx(
                     'fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static',
                     isOpen ? 'translate-x-0' : '-translate-x-full'
                 )}
             >
-                {/* Logo */}
+                {}
                 <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
                     <div className="flex items-center">
                         <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -118,7 +118,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
                     )}
                 </div>
 
-                {/* Navigation */}
+                {}
                 <nav className="flex-1 px-4 py-6 space-y-1">
                     {navItems.map((item) => (
                         <NavLink
@@ -139,7 +139,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
                     ))}
                 </nav>
 
-                {/* Footer */}
+                {}
                 <div className="px-4 py-4 border-t border-gray-200">
                     <p className="text-xs text-gray-500 text-center">
                         © 2024 Resume Screener

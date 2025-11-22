@@ -3,58 +3,52 @@ import { devtools, persist } from 'zustand/middleware';
 import ResumeService from '../services/resumeService';
 import type { Resume, ListResumesQuery, PaginationMeta, ParseQueueStatus } from '../api/types';
 
-/**
- * Resume filter state
- */
+
 export interface ResumeFilters {
-    // Backend filters
+    
     skills?: string[];
     experienceMin?: number;
     experienceMax?: number;
 
-    // Client-side filters
+    
     parseStatus?: 'ALL' | 'PENDING' | 'DONE' | 'FAILED';
     uploadDate?: 'all' | 'today' | 'last7days' | 'last30days';
 }
 
-/**
- * Resume sort options (client-side)
- */
+
 export type ResumeSortOption = 'newest' | 'oldest' | 'name-asc' | 'name-desc' | 'exp-high' | 'exp-low' | 'skills-count';
 
-/**
- * Bulk selection state
- */
+
 export interface BulkSelection {
     selectedIds: Set<string>;
     isAllSelected: boolean;
 }
 
 interface ResumeStore {
-    // Data
+    
     resumes: Resume[];
-    filteredResumes: Resume[]; // After applying client-side filters
+    filteredResumes: Resume[]; 
     pagination: PaginationMeta;
     parseQueue: ParseQueueStatus | null;
 
-    // Loading states
+    
     isLoading: boolean;
     isMutating: boolean;
     isProcessing: boolean;
     pollId: number | null;
     error: string | null;
 
-    // Filter & Sort state
+    
     filters: ResumeFilters;
     sortBy: ResumeSortOption;
 
-    // Bulk selection
+    
     bulkSelection: BulkSelection;
 
-    // Active parse jobs tracking
+    
     activeParseJobs: Map<string, ParseQueueStatus>;
 
-    // Actions
+    
     fetchResumes: (query?: ListResumesQuery) => Promise<void>;
     uploadResumes: (files: File[]) => Promise<void>;
     startProcessingMonitor: (opts?: { intervalMs?: number; timeoutMs?: number }) => void;
@@ -63,19 +57,19 @@ interface ResumeStore {
     bulkDeleteResumes: (ids: string[]) => Promise<void>;
     clearAllResumes: () => Promise<void>;
 
-    // Filter & Sort actions
+    
     setFilters: (filters: Partial<ResumeFilters>) => void;
     clearFilters: () => void;
     setSortBy: (sortBy: ResumeSortOption) => void;
     applyClientSideFiltersAndSort: () => void;
 
-    // Bulk selection actions
+    
     toggleSelectResume: (id: string) => void;
     selectAllResumes: () => void;
     clearSelection: () => void;
     getSelectedResumeIds: () => string[];
 
-    // Parse job tracking
+    
     addParseJob: (queueId: string, status: ParseQueueStatus) => void;
     updateParseJob: (queueId: string, status: ParseQueueStatus) => void;
     removeParseJob: (queueId: string) => void;
@@ -93,7 +87,7 @@ export const useResumeStore = create<ResumeStore>()(
     persist(
         devtools(
             (set, get) => ({
-                // Initial state
+                
                 resumes: [],
                 filteredResumes: [],
                 pagination: {},
@@ -111,7 +105,7 @@ export const useResumeStore = create<ResumeStore>()(
                 },
                 activeParseJobs: new Map(),
 
-                // Fetch resumes with backend filters
+                
                 fetchResumes: async (query) => {
                     set({ isLoading: true, error: null });
                     try {
@@ -127,7 +121,7 @@ export const useResumeStore = create<ResumeStore>()(
                                 },
                                 isLoading: false
                             });
-                            // Apply client-side filters after fetching
+                            
                             get().applyClientSideFiltersAndSort();
                         }
                     } catch (error: any) {
@@ -242,7 +236,7 @@ export const useResumeStore = create<ResumeStore>()(
                     }
                 },
 
-                // Filter & Sort actions
+                
                 setFilters: (filters) => {
                     set((state) => ({
                         filters: { ...state.filters, ...filters }
@@ -264,21 +258,21 @@ export const useResumeStore = create<ResumeStore>()(
                     const { resumes, filters, sortBy } = get();
                     let filtered = [...resumes];
 
-                    // Apply parse status filter
+                    
                     filtered = ResumeService.filterByParseStatus(filtered, filters.parseStatus);
 
-                    // Apply upload date filter
+                    
                     if (filters.uploadDate && filters.uploadDate !== 'all') {
                         filtered = ResumeService.filterByUploadDate(filtered, filters.uploadDate);
                     }
 
-                    // Apply sorting
+                    
                     filtered = ResumeService.sortResumes(filtered, sortBy);
 
                     set({ filteredResumes: filtered });
                 },
 
-                // Bulk selection actions
+                
                 toggleSelectResume: (id) => {
                     set((state) => {
                         const newSelection = new Set(state.bulkSelection.selectedIds);
@@ -319,7 +313,7 @@ export const useResumeStore = create<ResumeStore>()(
                     return Array.from(get().bulkSelection.selectedIds);
                 },
 
-                // Parse job tracking
+                
                 addParseJob: (queueId, status) => {
                     set((state) => {
                         const newJobs = new Map(state.activeParseJobs);

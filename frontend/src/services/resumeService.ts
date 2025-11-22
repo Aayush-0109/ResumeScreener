@@ -3,11 +3,7 @@ import type { ApiResponse, Resume, UploadManyResult, ParseQueueStatus, ListResum
 import type { AxiosRequestConfig } from 'axios';
 
 class ResumeService {
-    /**
-     * Get user's resumes with optional filtering
-     * Supports backend filters: skills, experienceMin, experienceMax
-     * Supports pagination: page, limit
-     */
+    
     static async getMyResumes(
         query?: ListResumesQuery,
         config?: AxiosRequestConfig
@@ -24,10 +20,7 @@ class ResumeService {
         }
     }
 
-    /**
-     * Upload multiple resume files
-     * Returns queueId for polling parse status
-     */
+    
     static async uploadMany(
         files: File[],
         onUploadProgress?: (progress: number) => void,
@@ -63,10 +56,7 @@ class ResumeService {
         }
     }
 
-    /**
-     * Get parse queue status
-     * Returns null if queue not found (404)
-     */
+    
     static async getParseStatus(
         queueId: string,
         signal?: AbortSignal
@@ -89,9 +79,7 @@ class ResumeService {
         }
     }
 
-    /**
-     * Delete a single resume
-     */
+    
     static async deleteResume(id: string): Promise<ApiResponse<{ deleted: boolean }>> {
         try {
             const response = await del<{ deleted: boolean }>(`/resumes/resume/${id}`);
@@ -102,10 +90,7 @@ class ResumeService {
         }
     }
 
-    /**
-     * Bulk delete resumes by IDs
-     * Note: Backend doesn't support this yet, so we do sequential deletes
-     */
+    
     static async bulkDeleteResumes(ids: string[]): Promise<{ deleted: number; failed: string[] }> {
         const results = {
             deleted: 0,
@@ -125,9 +110,7 @@ class ResumeService {
         return results;
     }
 
-    /**
-     * Clear all user's resumes
-     */
+    
     static async clearAllResumes(): Promise<ApiResponse<{ deletedCount: number }>> {
         try {
             const response = await del<{ deletedCount: number }>('/resumes/resume/clear-all');
@@ -138,9 +121,7 @@ class ResumeService {
         }
     }
 
-    /**
-     * Filter resumes client-side by parse status
-     */
+    
     static filterByParseStatus(
         resumes: Resume[],
         status?: 'PENDING' | 'DONE' | 'FAILED' | 'ALL'
@@ -151,9 +132,7 @@ class ResumeService {
         return resumes.filter(r => r.parseStatus === status);
     }
 
-    /**
-     * Filter resumes client-side by upload date
-     */
+    
     static filterByUploadDate(
         resumes: Resume[],
         dateFilter?: 'today' | 'last7days' | 'last30days'
@@ -180,9 +159,7 @@ class ResumeService {
         return resumes.filter(r => new Date(r.uploadedAt) >= cutoffDate);
     }
 
-    /**
-     * Sort resumes client-side
-     */
+    
     static sortResumes(
         resumes: Resume[],
         sortBy: 'newest' | 'oldest' | 'name-asc' | 'name-desc' | 'exp-high' | 'exp-low' | 'skills-count'
@@ -209,9 +186,7 @@ class ResumeService {
         }
     }
 
-    /**
-     * Handle and format errors
-     */
+    
     private static handleError(error: any, defaultMessage: string): Error {
         const message = error?.response?.data?.message || error?.message || defaultMessage;
         const newError = new Error(message);

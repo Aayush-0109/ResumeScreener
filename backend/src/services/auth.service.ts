@@ -46,6 +46,19 @@ export class AuthService {
             })
     }
 
+    static async generateTokensForUser(userId: string, email: string, role: string, name: string) {
+        const accessToken = this.generateAccessToken(userId, email, role, name);
+        const refreshToken = this.generateRefreshToken(userId, email, role);
+
+        // Store refresh token in database
+        await prisma.user.update({
+            where: { id: userId },
+            data: { refreshToken }
+        });
+
+        return { accessToken, refreshToken };
+    }
+
     static async register(email: string, password: string, name: string) {
         const existingUser = await prisma.user.findUnique({
             where: { email }

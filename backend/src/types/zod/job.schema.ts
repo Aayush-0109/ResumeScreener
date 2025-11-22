@@ -6,9 +6,9 @@ export const createJobBody = z.object({
   requirements: z.string().min(5),
   skills: z.array(z.string().min(1)).min(1),
   experience: z.number().int().nonnegative().nullable().optional(),
-  education: z.string().min(2).max(100).nullable().optional(),
-  location: z.string().min(2).max(120).nullable().optional(),
-  salary: z.string().min(1).max(120).nullable().optional()
+  education: z.string().max(100).optional().nullable().transform(val => !val || val.trim() === '' ? null : val),
+  location: z.string().max(120).optional().nullable().transform(val => !val || val.trim() === '' ? null : val),
+  salary: z.string().max(120).optional().nullable().transform(val => !val || val.trim() === '' ? null : val)
 });
 
 export const updateJobBody = createJobBody.partial();

@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 
 export interface PollingOptions<T> {
-    interval: number; // Polling interval in milliseconds
-    maxAttempts?: number; // Maximum number of polling attempts
-    enabled?: boolean; // Enable/disable polling
-    onSuccess?: (data: T) => void; // Callback on successful completion
-    onError?: (error: Error) => void; // Callback on error
-    onMaxAttemptsReached?: () => void; // Callback when max attempts reached
+    interval: number; 
+    maxAttempts?: number; 
+    enabled?: boolean; 
+    onSuccess?: (data: T) => void; 
+    onError?: (error: Error) => void; 
+    onMaxAttemptsReached?: () => void; 
 }
 
 export interface PollingResult<T> {
@@ -19,24 +19,7 @@ export interface PollingResult<T> {
     resetPolling: () => void;
 }
 
-/**
- * Generic polling hook for async operations
- * 
- * @param queryFn - Function that fetches data
- * @param shouldStopPolling - Function that determines if polling should stop
- * @param options - Polling configuration options
- * 
- * @example
- * const { data, isPolling } = usePolling(
- *   () => fetchStatus(queueId),
- *   (status) => ['COMPLETED', 'FAILED'].includes(status.status),
- *   {
- *     interval: 2000,
- *     enabled: !!queueId,
- *     onSuccess: (data) => console.log('Done!', data)
- *   }
- * );
- */
+
 export function usePolling<T>(
     queryFn: () => Promise<T>,
     shouldStopPolling: (data: T) => boolean,
@@ -94,7 +77,7 @@ export function usePolling<T>(
         };
     }, []);
 
-    // Auto-start polling when enabled changes to true
+    
     useEffect(() => {
         console.log('🔄 Polling enabled changed:', enabled);
         if (enabled) {
@@ -121,11 +104,11 @@ export function usePolling<T>(
         }
 
         let pollCount = 0;
-        const MAX_SAFETY_POLLS = 100; // Safety limit to prevent infinite polling
-        let isActive = true; // Flag to track if this effect is still active
+        const MAX_SAFETY_POLLS = 100; 
+        let isActive = true; 
 
         const poll = async () => {
-            // Check if effect was cleaned up
+            
             if (!isActive || !isMountedRef.current) {
                 console.log('🛑 Polling stopped - effect cleaned up');
                 return;
@@ -135,14 +118,14 @@ export function usePolling<T>(
                 pollCount++;
                 console.log(`🔄 Polling attempt #${pollCount}/${MAX_SAFETY_POLLS} (interval: ${interval}ms)`);
 
-                // Safety check - force stop after too many attempts
+                
                 if (pollCount >= MAX_SAFETY_POLLS) {
                     console.error('🛑 SAFETY: Stopping polling after', MAX_SAFETY_POLLS, 'attempts');
                     stopPolling();
                     return;
                 }
 
-                // Check max attempts (use pollCount, NOT state variable)
+                
                 if (maxAttempts && pollCount >= maxAttempts) {
                     console.log('⚠️ Max attempts reached');
                     stopPolling();
@@ -158,7 +141,7 @@ export function usePolling<T>(
                 setData(result);
                 setError(null);
 
-                // Check if we should stop polling
+                
                 if (shouldStopPolling(result)) {
                     console.log('🛑 Stopping polling - condition met');
                     stopPolling();
@@ -166,7 +149,7 @@ export function usePolling<T>(
                     return;
                 }
 
-                // ⚡ CRITICAL: Schedule next poll ONLY if still active
+                
                 if (isMountedRef.current && isActive) {
                     console.log(`⏰ Scheduling next poll in ${interval}ms`);
                     timeoutRef.current = setTimeout(poll, interval);
@@ -178,7 +161,7 @@ export function usePolling<T>(
                 setError(error);
                 onError?.(error);
 
-                // Continue polling on error unless explicitly stopped
+                
                 if (isMountedRef.current && isActive) {
                     console.log(`⏰ Scheduling retry in ${interval}ms after error`);
                     timeoutRef.current = setTimeout(poll, interval);
@@ -186,16 +169,16 @@ export function usePolling<T>(
             }
         };
 
-        // Start first poll immediately
+        
         console.log('🚀 Starting polling loop with interval:', interval);
         poll();
 
         return () => {
             console.log('🧹 Cleaning up polling effect');
-            isActive = false; // Mark as inactive to stop any pending polls
+            isActive = false; 
             clearExistingTimeout();
         };
-    }, [isPolling, enabled, interval]); // ⚡ CRITICAL: Removed attemptCount from dependencies!
+    }, [isPolling, enabled, interval]); 
 
     return {
         data,

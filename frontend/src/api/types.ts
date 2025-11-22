@@ -23,7 +23,7 @@ export interface PaginationMeta {
     totalPages?: number;
 }
 
-// Auth Types
+
 export interface User {
     id: string;
     email: string;
@@ -49,7 +49,7 @@ export interface AuthResponse {
     role: string;
 }
 
-// Job Types
+
 export interface Job {
     id: string;
     title: string;
@@ -75,7 +75,7 @@ export interface CreateJobData {
     salary?: string;
 }
 
-// Resume Types
+
 export interface Resume {
     id: string;
     fileName: string;
@@ -109,7 +109,7 @@ export interface ParseQueueStatus {
     errorMessage?: string | null;
 }
 
-// Matching Types
+
 export interface MatchQueueResponse {
     queueId: string;
     status: string;
@@ -162,12 +162,12 @@ export interface MatchesResponse {
     totalPages: number;
 }
 
-// Query Types
+
 export interface ListJobsQuery {
     page?: number;
     limit?: number;
     q?: string;
-    sort?: string; // Format: "field:order,field:order" (e.g., "createdAt:desc,title:asc")
+    sort?: string; 
 }
 
 export interface ListResumesQuery {

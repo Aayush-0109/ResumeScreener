@@ -11,7 +11,7 @@ export type OrganizedError = {
 export const organizeError = (err: unknown): OrganizedError => {
     const fallback: OrganizedError = { message: 'Something went wrong', raw: err }
 
-    // Axios error
+    
     const ax = err as AxiosError<any>
     if (ax && ax.isAxiosError) {
         const status = ax.response?.status
@@ -22,12 +22,12 @@ export const organizeError = (err: unknown): OrganizedError => {
         return { message, status, code, validation, raw: err }
     }
 
-    // Plain Error
+    
     if (err instanceof Error) {
         return { message: err.message || fallback.message, raw: err }
     }
 
-    // Unknown
+    
     return fallback
 }
 

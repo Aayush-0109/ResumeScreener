@@ -19,29 +19,36 @@ const cookieOption: CookieOptions = {
 export const registerUser = asyncHandler(async (req: Request, res: Response) => {
     const { email, password, name } = req.body;
 
-   
+
     logger.info('User registration started', {
         email,
         name,
         correlationId: req.correlationId
     });
 
-    const result = await AuthService.register(email, password, name);
+    // Register user
+    const user = await AuthService.register(email, password, name);
 
-    
-    logger.info('User registration completed', {
-        userId: result.id,
+    // Auto-login after registration: generate tokens
+    const { accessToken, refreshToken } = await AuthService.generateTokensForUser(user.id, user.email, user.role, user.name);
+
+
+    logger.info('User registration completed and auto-logged in', {
+        userId: user.id,
         email,
         correlationId: req.correlationId
     });
 
-    res.status(201).json(new ApiResponse(201, "User registered successfully", result));
+    // Set auth cookies just like login
+    res.cookie("refreshToken", refreshToken, cookieOption)
+        .cookie("accessToken", accessToken, cookieOption)
+        .status(201).json(new ApiResponse(201, "User registered successfully", user));
 });
 
 export const loginUser = asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
-   
+
     logger.info('User login started', {
         email,
         correlationId: req.correlationId
@@ -49,7 +56,7 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
 
     const { user, accessToken, refreshToken } = await AuthService.login(email, password);
 
-    
+
     logger.info('User login completed', {
         userId: user.id,
         email: user.email,
@@ -62,7 +69,7 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
 });
 export const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
     const refreshToken = req.cookies?.refreshToken
-    if(!refreshAccessToken) throw new UnauthorizedError("Refresh token not found");
+    if (!refreshToken) throw new UnauthorizedError("Refresh token not found");
     const { updatedUser, newAccessToken, newRefreshToken } = await AuthService.refreshAccessToken(refreshToken)
     res.cookie("refreshToken", newRefreshToken, cookieOption)
         .cookie("accessToken", newAccessToken, cookieOption)

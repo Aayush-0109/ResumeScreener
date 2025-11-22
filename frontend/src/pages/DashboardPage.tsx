@@ -35,7 +35,7 @@ export default function DashboardPage() {
     const { user } = useAuthStore();
     const { openModal } = useUIStore();
 
-    // Stores
+    
     const {
         resumes,
         pagination: resumePagination,
@@ -48,7 +48,7 @@ export default function DashboardPage() {
         buildQueryAndFetch: fetchJobs
     } = useJobStore();
 
-    // Local state
+    
     const [stats, setStats] = useState<DashboardStats>({
         totalResumes: 0,
         parsedResumes: 0,
@@ -62,7 +62,7 @@ export default function DashboardPage() {
     const [activities, setActivities] = useState<ActivityItem[]>([]);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-    // Fetch initial data
+    
     useEffect(() => {
         const loadDashboardData = async () => {
             try {
@@ -81,7 +81,7 @@ export default function DashboardPage() {
         loadDashboardData();
     }, []);
 
-    // Calculate stats from fetched data
+    
     useEffect(() => {
         if (resumes.length > 0 || jobs.length > 0) {
             const parsedCount = resumes.filter(r => r.parseStatus === 'DONE').length;
@@ -94,20 +94,20 @@ export default function DashboardPage() {
                 pendingResumes: pendingCount,
                 failedResumes: failedCount,
                 totalJobs: jobPagination.total || jobs.length,
-                recentMatches: 0, // Will be populated when we fetch match data
+                recentMatches: 0, 
                 avgMatchScore: 0
             });
 
-            // Generate activity feed
+            
             generateActivityFeed();
         }
     }, [resumes, jobs, resumePagination, jobPagination]);
 
-    // Generate activity feed from recent data
+    
     const generateActivityFeed = () => {
         const newActivities: ActivityItem[] = [];
 
-        // Recent resume uploads (last 5)
+        
         resumes
             .slice(0, 5)
             .forEach((resume) => {
@@ -121,7 +121,7 @@ export default function DashboardPage() {
                 });
             });
 
-        // Recent job postings (last 5)
+        
         jobs
             .slice(0, 5)
             .forEach((job) => {
@@ -135,15 +135,15 @@ export default function DashboardPage() {
                 });
             });
 
-        // Sort by timestamp (newest first)
+        
         newActivities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
         setActivities(newActivities.slice(0, 10));
     };
 
-    // Quick actions
+    
     const handleUploadResumes = () => {
-        openModal('upload-resumes');
+        navigate('/resumes', { state: { openUploadModal: true } });
     };
 
     const handleCreateJob = () => {
@@ -155,7 +155,7 @@ export default function DashboardPage() {
         navigate('/match');
     };
 
-    // Get greeting based on time
+    
     const getGreeting = () => {
         const hour = new Date().getHours();
         if (hour < 12) return 'Good morning';
@@ -163,7 +163,7 @@ export default function DashboardPage() {
         return 'Good evening';
     };
 
-    // Get status icon
+    
     const getStatusIcon = (status?: string) => {
         switch (status) {
             case 'success':
@@ -199,7 +199,7 @@ export default function DashboardPage() {
 
     return (
         <div className="space-y-6">
-            {/* Welcome Header */}
+            {}
             <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-lg shadow-lg p-8 text-white">
                 <h1 className="text-3xl font-bold mb-2">
                     {getGreeting()}, {user?.name || 'User'}! 👋
@@ -209,7 +209,7 @@ export default function DashboardPage() {
                 </p>
             </div>
 
-            {/* Quick Actions */}
+            {}
             <Card className="p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -252,9 +252,9 @@ export default function DashboardPage() {
                 </div>
             </Card>
 
-            {/* Stats Grid */}
+            {}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Total Resumes */}
+                {}
                 <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/resumes')}>
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-blue-100 rounded-lg">
@@ -288,7 +288,7 @@ export default function DashboardPage() {
                     )}
                 </Card>
 
-                {/* Total Jobs */}
+                {}
                 <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/jobs')}>
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-purple-100 rounded-lg">
@@ -304,7 +304,7 @@ export default function DashboardPage() {
                     </div>
                 </Card>
 
-                {/* Recent Matches */}
+                {}
                 <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/jobs')}>
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-green-100 rounded-lg">
@@ -320,7 +320,7 @@ export default function DashboardPage() {
                     </div>
                 </Card>
 
-                {/* System Status */}
+                {}
                 <Card className="p-6">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-yellow-100 rounded-lg">
@@ -338,7 +338,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Recent Activity Feed */}
+                {}
                 <Card className="p-6">
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-xl font-semibold text-gray-900">Recent Activity</h2>
@@ -376,7 +376,7 @@ export default function DashboardPage() {
                     )}
                 </Card>
 
-                {/* Getting Started / Tips */}
+                {}
                 <Card className="p-6">
                     <h2 className="text-xl font-semibold text-gray-900 mb-4">Getting Started</h2>
                     <div className="space-y-4">
@@ -451,7 +451,7 @@ export default function DashboardPage() {
                 </Card>
             </div>
 
-            {/* Tips & Resources */}
+            {}
             <Card className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
                 <div className="flex items-start gap-4">
                     <div className="flex-shrink-0">

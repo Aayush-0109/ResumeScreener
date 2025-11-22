@@ -39,9 +39,7 @@ export const Card: React.FC<CardProps> = ({
     );
 };
 
-/**
- * Card Header component
- */
+
 export const CardHeader: React.FC<{
     title: string;
     subtitle?: string;
@@ -59,9 +57,7 @@ export const CardHeader: React.FC<{
     );
 };
 
-/**
- * Card Footer component
- */
+
 export const CardFooter: React.FC<{
     children: React.ReactNode;
     className?: string;

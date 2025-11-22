@@ -19,7 +19,7 @@ export default function AppRoutes() {
     const { bootstrapping, getProfile } = useAuthStore();
     const { closeAllModals } = useUIStore();
 
-    // Close all modals when route changes
+    
     useEffect(() => {
         closeAllModals();
     }, [location.pathname, closeAllModals]);

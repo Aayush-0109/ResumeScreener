@@ -14,7 +14,7 @@ export default function MatchPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Store state
+  
   const {
     jobs,
     isLoading: loadingJobs,
@@ -34,7 +34,7 @@ export default function MatchPage() {
 
   const { openModal, closeModal, isModalOpen } = useUIStore();
 
-  // Local state
+  
   const [selectedJobId, setSelectedJobId] = useState<string>('');
   const [matchConfig, setMatchConfig] = useState<MatchOptions>(
     lastConfig || {
@@ -44,18 +44,18 @@ export default function MatchPage() {
   );
   const [matchQueueId, setMatchQueueId] = useState<string | null>(null);
 
-  // Load jobs and pre-select from URL
+  
   useEffect(() => {
     buildQueryAndFetch();
 
-    // Check if jobId is provided in URL
+    
     const jobIdFromUrl = searchParams.get('jobId');
     if (jobIdFromUrl) {
       setSelectedJobId(jobIdFromUrl);
     }
   }, []);
 
-  // Handle job errors
+  
   useEffect(() => {
     if (jobError) {
       toast.error(jobError);
@@ -63,7 +63,7 @@ export default function MatchPage() {
     }
   }, [jobError, clearJobError]);
 
-  // Handle match errors
+  
   useEffect(() => {
     if (matchError) {
       toast.error(matchError);
@@ -71,10 +71,10 @@ export default function MatchPage() {
     }
   }, [matchError, clearMatchError]);
 
-  // Get selected job
+  
   const selectedJob: Job | undefined = jobs.find(j => j.id === selectedJobId);
 
-  // Handle start matching
+  
   const handleStartMatch = async () => {
     if (!selectedJobId) {
       toast.error('Please select a job first');
@@ -107,7 +107,7 @@ export default function MatchPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
+      {}
       <div className="text-center">
         <h1 className="text-3xl font-bold text-gray-900">AI Resume Matching</h1>
         <p className="text-gray-600 mt-2 max-w-2xl mx-auto">
@@ -115,7 +115,7 @@ export default function MatchPage() {
         </p>
       </div>
 
-      {/* Main Content */}
+      {}
       <div className="max-w-3xl mx-auto">
         {jobs.length === 0 ? (
           <Card className="text-center py-12">
@@ -135,7 +135,7 @@ export default function MatchPage() {
         ) : (
           <Card className="p-8">
             <div className="space-y-6">
-              {/* Step 1: Job Selection */}
+              {}
               <div>
                 <div className="flex items-center mb-4">
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary-100 text-primary-600 font-semibold mr-3">
@@ -159,7 +159,7 @@ export default function MatchPage() {
                 </select>
               </div>
 
-              {/* Selected Job Preview */}
+              {}
               {selectedJob && (
                 <div className="bg-gradient-to-br from-primary-50 to-blue-50 rounded-lg p-6 border border-primary-200">
                   <h3 className="font-semibold text-gray-900 text-lg mb-2">{selectedJob.title}</h3>
@@ -198,7 +198,7 @@ export default function MatchPage() {
                 </div>
               )}
 
-              {/* Step 2: Configure Matching Parameters (Simplified) */}
+              {}
               {selectedJob && (
                 <div>
                   <div className="flex items-center mb-4">
@@ -246,7 +246,7 @@ export default function MatchPage() {
                 </div>
               )}
 
-              {/* Action Button */}
+              {}
               <div className="pt-4 border-t">
                 <Button
                   onClick={handleStartMatch}
@@ -281,7 +281,7 @@ export default function MatchPage() {
         )}
       </div>
 
-      {/* Feature Cards */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
         <Card className="text-center p-6">
           <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mx-auto mb-4">
@@ -320,7 +320,7 @@ export default function MatchPage() {
         </Card>
       </div>
 
-      {/* Match Progress Modal */}
+      {}
       {matchQueueId && (
         <MatchProgressModal
           isOpen={isModalOpen('match-progress')}

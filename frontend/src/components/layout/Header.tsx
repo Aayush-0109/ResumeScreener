@@ -28,7 +28,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
     return (
         <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-10">
-            {/* Left side */}
+            {}
             <div className="flex items-center gap-3">
                 {onMenuClick && (
                     <button
@@ -51,9 +51,9 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 </h1>
             </div>
 
-            {/* Right side */}
+            {}
             <div className="flex items-center gap-4">
-                {/* Notifications (Future) */}
+                {}
                 <button
                     className="text-gray-500 hover:text-gray-700 relative"
                     aria-label="Notifications"
@@ -68,7 +68,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                     </svg>
                 </button>
 
-                {/* User Menu */}
+                {}
                 <div className="relative">
                     <button
                         onClick={() => setShowUserMenu(!showUserMenu)}
@@ -100,7 +100,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                         </svg>
                     </button>
 
-                    {/* Dropdown Menu */}
+                    {}
                     {showUserMenu && (
                         <>
                             <div

@@ -45,9 +45,7 @@ export const SortDropdown: React.FC<SortDropdownProps> = ({
     );
 };
 
-/**
- * Sort button with icon for table headers
- */
+
 export const SortButton: React.FC<{
     label: string;
     active: boolean;

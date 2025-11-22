@@ -17,7 +17,7 @@ export default function ResultsPage() {
     const { jobId } = useParams<{ jobId: string }>();
     const navigate = useNavigate();
 
-    // Store state
+    
     const {
         filteredMatches,
         pagination,
@@ -42,13 +42,13 @@ export default function ResultsPage() {
 
     const { openModal, closeModal, isModalOpen } = useUIStore();
 
-    // Local state
+    
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize] = useState(10);
     const [showFilters, setShowFilters] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
 
-    // Sort options
+    
     const sortOptions = [
         { value: 'overall-desc', label: 'Overall Score (High → Low)', field: 'overallMatchScore' as MatchSortField, order: 'desc' as MatchSortOrder },
         { value: 'overall-asc', label: 'Overall Score (Low → High)', field: 'overallMatchScore' as MatchSortField, order: 'asc' as MatchSortOrder },
@@ -60,13 +60,13 @@ export default function ResultsPage() {
         { value: 'date-asc', label: 'Matched Date (Oldest)', field: 'matchedAt' as MatchSortField, order: 'asc' as MatchSortOrder }
     ];
 
-    // Initial load
+    
     useEffect(() => {
         if (jobId) {
             console.log('📍 ResultsPage loading for jobId:', jobId);
             setCurrentJobId(jobId);
 
-            // Fetch job and matches in sequence
+            
             const loadData = async () => {
                 try {
                     await fetchJobById(jobId);
@@ -80,7 +80,7 @@ export default function ResultsPage() {
         }
     }, [jobId, fetchJobById]);
 
-    // Handle errors
+    
     useEffect(() => {
         if (error) {
             toast.error(error);
@@ -88,7 +88,7 @@ export default function ResultsPage() {
         }
     }, [error, clearError]);
 
-    // Fetch with current sort
+    
     const fetchMatchesWithSort = () => {
         if (!jobId) return;
 
@@ -102,25 +102,25 @@ export default function ResultsPage() {
         fetchMatches(jobId, query);
     };
 
-    // Handle sort change
+    
     const handleSortChange = (value: string) => {
         const option = sortOptions.find(opt => opt.value === value);
         if (option) {
             setSortState({ field: option.field, order: option.order });
             setCurrentPage(1);
 
-            // Fetch with new sort
+            
             setTimeout(() => fetchMatchesWithSort(), 0);
         }
     };
 
-    // Handle page change
+    
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
         setTimeout(() => fetchMatchesWithSort(), 0);
     };
 
-    // Handle export
+    
     const handleExport = async (format: 'csv' | 'json') => {
         if (!jobId) return;
 
@@ -130,7 +130,7 @@ export default function ResultsPage() {
                 sortState.field,
                 sortState.order,
                 1,
-                1000 // Export all
+                1000 
             );
 
             const blob = await MatchingService.exportMatches(jobId, format, query);
@@ -143,7 +143,7 @@ export default function ResultsPage() {
         }
     };
 
-    // Handle clear matches
+    
     const handleClearMatches = async () => {
         if (!jobId) return;
 
@@ -157,13 +157,13 @@ export default function ResultsPage() {
         }
     };
 
-    // Handle re-run match
+    
     const handleRerunMatch = () => {
         if (!jobId) return;
         navigate(`/match?jobId=${jobId}`);
     };
 
-    // Get current sort value
+    
     const getCurrentSortValue = () => {
         const option = sortOptions.find(
             opt => opt.field === sortState.field && opt.order === sortState.order
@@ -171,7 +171,7 @@ export default function ResultsPage() {
         return option?.value || 'overall-desc';
     };
 
-    // Calculate stats
+    
     const stats = {
         total: pagination.total || 0,
         strong: filteredMatches.filter(m => (m.overallMatchScore || 0) >= 90).length,
@@ -181,13 +181,13 @@ export default function ResultsPage() {
             : 0
     };
 
-    // Get score distribution
+    
     const scoreDistribution = getScoreDistribution();
 
-    // Get top missing skills
+    
     const topMissingSkills = getMostCommonMissingSkills(5);
 
-    // Active filter count
+    
     const activeFilterCount = [
         filters.scoreThresholds?.overall,
         filters.scoreThresholds?.skills,
@@ -197,14 +197,14 @@ export default function ResultsPage() {
         filters.minEducationQuality
     ].filter(Boolean).length;
 
-    // Show loading state while fetching initial data
+    
     if (isLoading && !currentJob) {
         return <PageSpinner label="Loading results..." />;
     }
 
     return (
         <div className="space-y-6">
-            {/* Header */}
+            {}
             <div className="flex justify-between items-start">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
@@ -251,7 +251,7 @@ export default function ResultsPage() {
                 </div>
             </div>
 
-            {/* Job Summary Card */}
+            {}
             {currentJob ? (
                 <Card className="p-6">
                     <div className="flex items-start justify-between">
@@ -289,7 +289,7 @@ export default function ResultsPage() {
                 </Card>
             )}
 
-            {/* Stats Cards */}
+            {}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <Card className="p-6">
                     <div className="flex items-center">
@@ -348,7 +348,7 @@ export default function ResultsPage() {
                 </Card>
             </div>
 
-            {/* Filter & Sort Bar */}
+            {}
             <div className="flex justify-between items-center gap-4">
                 <div className="flex items-center gap-3">
                     <Button
@@ -393,7 +393,7 @@ export default function ResultsPage() {
                 </div>
             </div>
 
-            {/* Score Distribution Summary */}
+            {}
             {filteredMatches.length > 0 && (
                 <Card className="p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Score Distribution</h3>
@@ -418,7 +418,7 @@ export default function ResultsPage() {
                 </Card>
             )}
 
-            {/* Top Missing Skills */}
+            {}
             {topMissingSkills.length > 0 && (
                 <Card className="p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Most Common Missing Skills</h3>
@@ -433,7 +433,7 @@ export default function ResultsPage() {
                 </Card>
             )}
 
-            {/* Match Results Grid */}
+            {}
             {isLoading ? (
                 <div className="flex justify-center items-center py-12">
                     <Spinner />
@@ -473,7 +473,7 @@ export default function ResultsPage() {
                 </div>
             )}
 
-            {/* Pagination */}
+            {}
             {filteredMatches.length > 0 && pagination.totalPages && pagination.totalPages > 1 && (
                 <Pagination
                     currentPage={currentPage}
@@ -482,7 +482,7 @@ export default function ResultsPage() {
                 />
             )}
 
-            {/* Filters Modal */}
+            {}
             <Modal isOpen={showFilters} onClose={() => setShowFilters(false)} title="Filter Matches" size="lg">
                 <div className="py-4">
                     <MatchFilters
@@ -520,7 +520,7 @@ export default function ResultsPage() {
                 </div>
             </Modal>
 
-            {/* Export Menu Modal */}
+            {}
             <Modal isOpen={isModalOpen('export-menu')} onClose={() => closeModal('export-menu')} title="Export Matches">
                 <div className="py-4 space-y-3">
                     <p className="text-sm text-gray-600">
@@ -551,7 +551,7 @@ export default function ResultsPage() {
                 </div>
             </Modal>
 
-            {/* Clear Confirmation Modal */}
+            {}
             <Modal isOpen={isModalOpen('clear-confirm')} onClose={() => closeModal('clear-confirm')} title="Clear All Matches">
                 <div className="py-4">
                     <p className="text-sm text-gray-600">

@@ -1,20 +1,11 @@
 import { useState } from 'react';
 
-/**
- * Hook to persist state in localStorage
- * 
- * @param key - localStorage key
- * @param initialValue - Initial value if not found in localStorage
- * @returns [value, setValue, removeValue]
- * 
- * @example
- * const [theme, setTheme, removeTheme] = useLocalStorage('theme', 'light');
- */
+
 export function useLocalStorage<T>(
     key: string,
     initialValue: T
 ): [T, (value: T | ((val: T) => T)) => void, () => void] {
-    // Get stored value or use initial value
+    
     const [storedValue, setStoredValue] = useState<T>(() => {
         if (typeof window === 'undefined') {
             return initialValue;
@@ -29,7 +20,7 @@ export function useLocalStorage<T>(
         }
     });
 
-    // Update localStorage when value changes
+    
     const setValue = (value: T | ((val: T) => T)) => {
         try {
             const valueToStore = value instanceof Function ? value(storedValue) : value;
@@ -43,7 +34,7 @@ export function useLocalStorage<T>(
         }
     };
 
-    // Remove from localStorage
+    
     const removeValue = () => {
         try {
             setStoredValue(initialValue);

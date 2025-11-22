@@ -30,7 +30,7 @@ export const ParseProgressModal: React.FC<ParseProgressModalProps> = ({
             return ['COMPLETED', 'FAILED', 'CANCELLED'].includes(status.status);
         },
         {
-            interval: 5000, // Poll every 5 seconds to reduce server load
+            interval: 5000, 
             enabled: isOpen && !!queueId,
             onSuccess: (data) => {
                 if (data?.status === 'COMPLETED') {
@@ -43,7 +43,7 @@ export const ParseProgressModal: React.FC<ParseProgressModalProps> = ({
             },
             onError: (err) => {
                 console.error('Polling error:', err);
-                // Only show error toast once per queue ID
+                
                 toast.error('Failed to check parsing status', { id: `parse-error-${queueId}` });
             },
         }

@@ -11,12 +11,7 @@ export interface JobSortOption {
 }
 
 class JobService {
-    /**
-     * Get user's jobs with optional search and sorting
-     * Supports backend search: q (searches in title, description, requirements)
-     * Supports backend sort: multi-field sorting ("field:order,field:order")
-     * Supports pagination: page, limit
-     */
+    
     static async getMyJobs(
         query?: ListJobsQuery,
         config?: AxiosRequestConfig
@@ -33,9 +28,7 @@ class JobService {
         }
     }
 
-    /**
-     * Get a single job by ID
-     */
+    
     static async getJobById(id: string, config?: AxiosRequestConfig): Promise<ApiResponse<Job>> {
         try {
             const response = await get<Job>(`/jobs/job/${id}`, config);
@@ -46,9 +39,7 @@ class JobService {
         }
     }
 
-    /**
-     * Create a new job
-     */
+    
     static async createJob(jobData: CreateJobData): Promise<ApiResponse<Job>> {
         try {
             const response = await post<Job>('/jobs/job', jobData);
@@ -59,9 +50,7 @@ class JobService {
         }
     }
 
-    /**
-     * Update an existing job
-     */
+    
     static async updateJob(id: string, jobData: Partial<CreateJobData>): Promise<ApiResponse<Job>> {
         try {
             const response = await put<Job>(`/jobs/job/${id}`, jobData);
@@ -72,9 +61,7 @@ class JobService {
         }
     }
 
-    /**
-     * Delete a job
-     */
+    
     static async deleteJob(id: string): Promise<ApiResponse<null>> {
         try {
             const response = await del<null>(`/jobs/job/${id}`);
@@ -85,12 +72,7 @@ class JobService {
         }
     }
 
-    /**
-     * Format sort options to backend format
-     * Converts array of {field, order} to "field:order,field:order" string
-     * Example: [{field: 'createdAt', order: 'desc'}, {field: 'title', order: 'asc'}]
-     *          -> "createdAt:desc,title:asc"
-     */
+    
     static formatSortString(sortOptions: JobSortOption[]): string {
         return sortOptions
             .filter(opt => opt.field && opt.order)
@@ -98,10 +80,7 @@ class JobService {
             .join(',');
     }
 
-    /**
-     * Parse sort string to sort options
-     * Converts "field:order,field:order" string to array of {field, order}
-     */
+    
     static parseSortString(sortString: string): JobSortOption[] {
         if (!sortString) return [];
 
@@ -114,16 +93,12 @@ class JobService {
         });
     }
 
-    /**
-     * Get default sort string (newest first)
-     */
+    
     static getDefaultSort(): string {
         return 'createdAt:desc';
     }
 
-    /**
-     * Build query with sort
-     */
+    
     static buildQueryWithSort(
         searchQuery?: string,
         sortOptions?: JobSortOption[],
@@ -148,9 +123,7 @@ class JobService {
         return query;
     }
 
-    /**
-     * Handle and format errors
-     */
+    
     private static handleError(error: any, defaultMessage: string): Error {
         const message = error?.response?.data?.message || error?.message || defaultMessage;
         const newError = new Error(message);

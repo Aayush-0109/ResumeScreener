@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "siftly-backend",
   "version": "1.0.0",
   "description": "",
   "license": "ISC",
@@ -20,6 +20,7 @@
   "dependencies": {
     "@cloudinary-util/types": "^1.6.0",
     "@elastic/elasticsearch": "^9.1.1",
+    "@prisma/client": "^6.15.0",
     "@types/ioredis": "^4.28.10",
     "@types/winston": "^2.4.4",
     "bcryptjs": "^3.0.2",
@@ -38,7 +39,6 @@
     "zod": "^4.1.5"
   },
   "devDependencies": {
-    "@prisma/client": "^6.15.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.9",
     "@types/cors": "^2.8.19",

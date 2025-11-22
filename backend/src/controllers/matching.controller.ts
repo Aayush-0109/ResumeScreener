@@ -25,7 +25,7 @@ export const enqueueMatch = asyncHandler(async (req: Request, res: Response) => 
 
   const queueId = await queueService.enqueueJob(jobId, userId, { topN, weights, insightsTopK });
 
- 
+
   logger.info('Match job queued successfully', {
     userId,
     jobId,
@@ -40,7 +40,7 @@ export const enqueueMatch = asyncHandler(async (req: Request, res: Response) => 
 export const getMatchStatus = asyncHandler(async (req: Request, res: Response) => {
   const { queueId } = req.params;
 
-  
+
   logger.info('Queue status checked', {
     queueId,
     correlationId: req.correlationId
@@ -60,9 +60,6 @@ export const getMatchStatus = asyncHandler(async (req: Request, res: Response) =
 });
 
 
-
-
-
 export const cancelMatch = asyncHandler(async (req: Request, res: Response) => {
   const { queueId } = req.params;
 
@@ -75,7 +72,7 @@ export const cancelMatch = asyncHandler(async (req: Request, res: Response) => {
   const ok = await queueService.cancelJob(queueId);
   if (!ok) throw new ConflictError('Cannot cancel');
 
- 
+
   logger.info('Match job cancelled successfully', {
     queueId,
     correlationId: req.correlationId
@@ -89,7 +86,6 @@ export const listMatches = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user.id!;
   const { jobId } = req.params;
 
- 
   logger.info('List matches started', {
     userId,
     jobId,
@@ -97,17 +93,16 @@ export const listMatches = asyncHandler(async (req: Request, res: Response) => {
     correlationId: req.correlationId
   });
 
-  const result = await service.listMatches(jobId, userId, req.query as any);
+  const { data, ...meta } = await service.listMatches(jobId, userId, req.query as any);
 
-  
   logger.info('List matches completed', {
     userId,
     jobId,
-    matchCount: result.data?.length || 0,
+    matchCount: data?.length || 0,
     correlationId: req.correlationId
   });
 
-  return res.json(new ApiResponse(200, 'OK', result));
+  return res.json(new ApiResponse(200, 'OK', data, meta));
 });
 
 
@@ -115,7 +110,6 @@ export const clearMatches = asyncHandler(async (req: Request, res: Response) => 
   const userId = req.user.id!;
   const { jobId } = req.params;
 
- 
   logger.info('Clear matches started', {
     userId,
     jobId,
@@ -125,7 +119,6 @@ export const clearMatches = asyncHandler(async (req: Request, res: Response) => 
   const result = await service.clearMatches(jobId, userId);
   await redisService.delPattern(`${userId}/GET//match/${jobId}/*`);
 
- 
   logger.info('Clear matches completed', {
     userId,
     jobId,

@@ -124,7 +124,14 @@ class ResumeService implements IResumeService {
 
     return {
       createdCount: successfulResumes.length,
-      created: successfulResumes.map(r => ({ fileName: r.fileName, fileSize: r.fileSize, mimeType: r.mimeType })),
+      created: successfulResumes.map(r => ({
+        fileName: r.fileName,
+        fileUrl: '',
+        downloadUrl: '',
+        publicId: '',
+        fileSize: r.fileSize,
+        mimeType: r.mimeType
+      })),
       failed: []
     };
   }

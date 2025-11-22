@@ -7,7 +7,13 @@ def setup_logger():
     log_dir.mkdir(exist_ok=True)
 
     logger = logging.getLogger("ai-service")
+    
+    # Prevent duplicate handlers
+    if logger.handlers:
+        return logger
+    
     logger.setLevel(logging.INFO)
+    logger.propagate = False  # Prevent propagation to root logger
 
     formatter = logging.Formatter(
         '%(asctime)s - %(levelname)s - %(message)s'

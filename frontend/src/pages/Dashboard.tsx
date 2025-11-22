@@ -6,7 +6,7 @@ import { Button } from '../components/common/Button';
 const Dashboard: React.FC = () => {
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {/* Page Header */}
+            {}
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
                 <p className="mt-1 text-sm text-gray-600">
@@ -14,7 +14,7 @@ const Dashboard: React.FC = () => {
                 </p>
             </div>
 
-            {/* Stats Cards */}
+            {}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
                 <Card padding="md" hover>
                     <div className="flex items-center">
@@ -113,7 +113,7 @@ const Dashboard: React.FC = () => {
                 </Card>
             </div>
 
-            {/* Quick Actions */}
+            {}
             <Card className="mb-8">
                 <CardHeader title="Quick Actions" subtitle="Get started with common tasks" />
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -147,7 +147,7 @@ const Dashboard: React.FC = () => {
                 </div>
             </Card>
 
-            {/* Recent Activity & Matches - Placeholder */}
+            {}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card>
                     <CardHeader title="Recent Activity" subtitle="Your latest actions" />

@@ -14,7 +14,7 @@ export class Cloudinary {
   static generatePublicId(userId: string, originalname: string): string {
     const base = originalname.replace(/\.[^/.]+$/, '').replace(/\s+/g, '-').toLowerCase();
     const ts = Date.now();
-    return `resumescreener/${process.env.NODE_ENV || 'dev'}/resumes/${userId}/${ts}-${base}`;
+    return `siftly/${process.env.NODE_ENV || 'dev'}/resumes/${userId}/${ts}-${base}`;
   }
   static toDataURI(input: UploadInput) {
     const base64 = input.buffer.toString('base64');

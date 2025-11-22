@@ -33,7 +33,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
             className={`${isTopMatch ? 'border-2 border-yellow-400 bg-yellow-50' : ''}`}
             padding="md"
         >
-            {/* Header */}
+            {}
             <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                     {isTopMatch && (
@@ -65,7 +65,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
                 </div>
             </div>
 
-            {/* Score Breakdown */}
+            {}
             <div className="space-y-2 mb-4">
                 {match.skillsMatchScore !== null && match.skillsMatchScore !== undefined && (
                     <div>
@@ -128,7 +128,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
                 )}
             </div>
 
-            {/* Collapsible Details */}
+            {}
             {!showFullDetails && (
                 <button
                     onClick={() => setIsExpanded(!isExpanded)}
@@ -138,10 +138,10 @@ export const MatchCard: React.FC<MatchCardProps> = ({
                 </button>
             )}
 
-            {/* Expanded Details */}
+            {}
             {isExpanded && (
                 <div className="space-y-3 pt-3 border-t border-gray-200">
-                    {/* Matched Skills */}
+                    {}
                     {match.matchedSkills && match.matchedSkills.length > 0 && (
                         <div>
                             <h4 className="text-sm font-semibold text-green-700 mb-2">✓ Matched Skills</h4>
@@ -158,7 +158,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
                         </div>
                     )}
 
-                    {/* Missing Skills */}
+                    {}
                     {match.missingSkills && match.missingSkills.length > 0 && (
                         <div>
                             <h4 className="text-sm font-semibold text-red-700 mb-2">✗ Missing Skills</h4>
@@ -175,7 +175,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
                         </div>
                     )}
 
-                    {/* Experience Gap */}
+                    {}
                     {match.experienceGap !== null && match.experienceGap !== undefined && match.experienceGap > 0 && (
                         <div className="p-3 bg-yellow-50 rounded-md">
                             <p className="text-sm text-yellow-800">
@@ -186,7 +186,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
                         </div>
                     )}
 
-                    {/* Education Match */}
+                    {}
                     {match.educationMatch && (
                         <div>
                             <p className="text-sm text-gray-700">
@@ -205,7 +205,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
                         </div>
                     )}
 
-                    {/* AI Insights */}
+                    {}
                     {match.aiMatchInsights && (
                         <div className="p-3 bg-blue-50 rounded-md">
                             <h4 className="text-sm font-semibold text-blue-900 mb-1">💡 AI Insights</h4>
@@ -213,7 +213,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
                         </div>
                     )}
 
-                    {/* Resume Details */}
+                    {}
                     {match.resume.education && (
                         <div className="text-sm text-gray-700">
                             <span className="font-semibold">Candidate Education:</span> {match.resume.education}
@@ -238,7 +238,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
                 </div>
             )}
 
-            {/* Actions */}
+            {}
             <div className="flex gap-2 pt-3 border-t border-gray-200 mt-3">
                 {onViewResume && (
                     <Button size="sm" variant="primary" onClick={() => onViewResume(match)}>

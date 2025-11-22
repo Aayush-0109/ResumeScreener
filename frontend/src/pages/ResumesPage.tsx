@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useResumeStore } from '../state/resumeStore';
 import { useUIStore } from '../state/uiStore';
 import { ResumeCard } from '../components/features/resumes/ResumeCard';
@@ -12,7 +13,7 @@ import { PageSpinner, Spinner } from '../components/common/Spinner';
 import toast from 'react-hot-toast';
 
 export default function ResumesPage() {
-    // Store state
+
     const {
         filteredResumes,
         pagination,
@@ -36,14 +37,16 @@ export default function ResumesPage() {
     } = useResumeStore();
 
     const { openModal, closeModal, isModalOpen } = useUIStore();
+    const location = useLocation();
+    const navigate = useNavigate();
 
-    // Local state
+
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize] = useState(10);
     const [parseQueueId, setParseQueueId] = useState<string | null>(null);
     const [showFilters, setShowFilters] = useState(false);
 
-    // Sort options
+
     const sortOptions = [
         { label: 'Newest First', value: 'newest' },
         { label: 'Oldest First', value: 'oldest' },
@@ -54,12 +57,21 @@ export default function ResumesPage() {
         { label: 'Most Skills First', value: 'skills-count' }
     ];
 
-    // Initial fetch
+
     useEffect(() => {
         fetchResumesWithFilters();
     }, []);
 
-    // Handle errors
+
+    useEffect(() => {
+        const state = location.state as { openUploadModal?: boolean } | undefined;
+        if (state?.openUploadModal) {
+            openModal('upload-resumes');
+            navigate(location.pathname, { replace: true });
+        }
+    }, [location.state, location.pathname, openModal, navigate]);
+
+
     useEffect(() => {
         if (error) {
             toast.error(error);
@@ -67,14 +79,14 @@ export default function ResumesPage() {
         }
     }, [error, clearError]);
 
-    // Fetch resumes with current filters (backend filters only)
+
     const fetchResumesWithFilters = () => {
         const query: any = {
             page: currentPage,
             limit: pageSize
         };
 
-        // Add backend filters
+
         if (filters.skills && filters.skills.length > 0) {
             query.skills = filters.skills;
         }
@@ -88,12 +100,12 @@ export default function ResumesPage() {
         fetchResumes(query);
     };
 
-    // Refetch when filters or pagination changes
+
     useEffect(() => {
         fetchResumesWithFilters();
     }, [currentPage, pageSize, filters.skills, filters.experienceMin, filters.experienceMax]);
 
-    // Handle file upload
+
     const handleUpload = async (files: File[]) => {
         if (!files.length) return;
 
@@ -103,14 +115,14 @@ export default function ResumesPage() {
             toast.success(`${files.length} resumes uploaded successfully! Processing in background...`);
             clearSelection();
 
-            // Refetch after upload to show processing status
+
             setTimeout(() => fetchResumesWithFilters(), 1000);
         } catch (error: any) {
             toast.error(error.message || 'Failed to upload resumes');
         }
     };
 
-    // Handle delete
+
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this resume?')) return;
 
@@ -123,7 +135,7 @@ export default function ResumesPage() {
         }
     };
 
-    // Handle bulk delete
+
     const handleBulkDelete = async () => {
         const selectedIds = getSelectedResumeIds();
         if (!selectedIds.length) {
@@ -147,7 +159,7 @@ export default function ResumesPage() {
         }
     };
 
-    // Handle clear all
+
     const handleClearAll = async () => {
         if (!confirm('This will delete ALL your resumes. Are you sure?')) return;
 
@@ -165,23 +177,23 @@ export default function ResumesPage() {
         }
     };
 
-    // Handle filter change
+
     const handleFilterChange = (newFilters: typeof filters) => {
         setFilters(newFilters);
-        setCurrentPage(1); // Reset to page 1 on filter change
+        setCurrentPage(1);
     };
 
-    // Handle sort change
+
     const handleSortChange = (newSort: string) => {
         setSortBy(newSort as any);
     };
 
-    // Handle page change
+
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
     };
 
-    // Calculate stats
+
     const stats = {
         total: pagination.total || 0,
         parsed: filteredResumes.filter(r => r.parseStatus === 'DONE').length,
@@ -191,7 +203,7 @@ export default function ResumesPage() {
             : '0'
     };
 
-    // Active filter count
+
     const activeFilterCount = [
         filters.skills?.length,
         filters.experienceMin !== undefined,
@@ -200,7 +212,7 @@ export default function ResumesPage() {
         filters.uploadDate && filters.uploadDate !== 'all'
     ].filter(Boolean).length;
 
-    // Check if any resumes are selected
+
     const hasSelection = bulkSelection.selectedIds.size > 0;
 
     if (isLoading && filteredResumes.length === 0) {
@@ -209,7 +221,7 @@ export default function ResumesPage() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
+            { }
             <div className="flex justify-between items-start">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Resume Library</h1>
@@ -229,7 +241,7 @@ export default function ResumesPage() {
                 </div>
             </div>
 
-            {/* Stats Cards */}
+            { }
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="bg-white rounded-lg shadow p-6">
                     <div className="flex items-center">
@@ -288,7 +300,7 @@ export default function ResumesPage() {
                 </div>
             </div>
 
-            {/* Filters & Actions Bar */}
+            { }
             <div className="flex justify-between items-center gap-4">
                 <div className="flex items-center gap-3">
                     <Button
@@ -338,7 +350,7 @@ export default function ResumesPage() {
                 </div>
             </div>
 
-            {/* Resume Cards Grid */}
+            { }
             {isLoading ? (
                 <div className="flex justify-center items-center py-12">
                     <Spinner />
@@ -373,7 +385,7 @@ export default function ResumesPage() {
                 </div>
             )}
 
-            {/* Pagination */}
+            { }
             {filteredResumes.length > 0 && pagination.totalPages && pagination.totalPages > 1 && (
                 <Pagination
                     currentPage={currentPage}
@@ -382,7 +394,7 @@ export default function ResumesPage() {
                 />
             )}
 
-            {/* Parse Progress Modal */}
+            { }
             {parseQueueId && (
                 <ParseProgressModal
                     isOpen={isModalOpen('parse-progress')}
@@ -395,7 +407,7 @@ export default function ResumesPage() {
                 />
             )}
 
-            {/* Upload Modal */}
+            { }
             <Modal isOpen={isModalOpen('upload-resumes')} onClose={() => closeModal('upload-resumes')} title="Upload Resumes">
                 <div className="space-y-4">
                     <p className="text-sm text-gray-600">
@@ -421,7 +433,7 @@ export default function ResumesPage() {
                 </ModalFooter>
             </Modal>
 
-            {/* Filters Modal */}
+            { }
             <Modal isOpen={showFilters} onClose={() => setShowFilters(false)} title="Filter Resumes" size="lg">
                 <div className="py-4">
                     <ResumeFilters

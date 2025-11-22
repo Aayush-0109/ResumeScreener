@@ -3,9 +3,7 @@ import { devtools, persist } from 'zustand/middleware';
 import JobService, { type JobSortOption } from '../services/jobService';
 import type { Job, CreateJobData, ListJobsQuery, PaginationMeta } from '../api/types';
 
-/**
- * Job search and sort state
- */
+
 export interface JobQueryState {
     searchQuery: string;
     sortOptions: JobSortOption[];
@@ -14,27 +12,27 @@ export interface JobQueryState {
 }
 
 interface JobStore {
-    // Data
+    
     jobs: Job[];
     currentJob: Job | null;
     pagination: PaginationMeta;
 
-    // Loading states
+    
     isLoading: boolean;
     isMutating: boolean;
     error: string | null;
 
-    // Query state (search + sort)
+    
     queryState: JobQueryState;
 
-    // Actions
+    
     fetchJobs: (query?: ListJobsQuery) => Promise<void>;
     fetchJobById: (id: string) => Promise<void>;
     createJob: (data: CreateJobData) => Promise<Job>;
     updateJob: (id: string, data: Partial<CreateJobData>) => Promise<void>;
     deleteJob: (id: string) => Promise<void>;
 
-    // Search & Sort actions
+    
     setSearchQuery: (query: string) => void;
     setSortOptions: (options: JobSortOption[]) => void;
     setPage: (page: number) => void;
@@ -42,7 +40,7 @@ interface JobStore {
     resetQuery: () => void;
     buildQueryAndFetch: () => Promise<void>;
 
-    // Clear
+    
     clearCurrentJob: () => void;
     clearError: () => void;
 }
@@ -58,7 +56,7 @@ export const useJobStore = create<JobStore>()(
     persist(
         devtools(
             (set, get) => ({
-                // Initial state
+                
                 jobs: [],
                 currentJob: null,
                 pagination: {},
@@ -127,7 +125,7 @@ export const useJobStore = create<JobStore>()(
                                 jobs: [response.data!, ...state.jobs],
                                 isMutating: false
                             }));
-                            // Refetch to ensure proper order
+                            
                             get().buildQueryAndFetch();
                             return response.data;
                         }
@@ -179,7 +177,7 @@ export const useJobStore = create<JobStore>()(
                     }
                 },
 
-                // Search & Sort actions
+                
                 setSearchQuery: (searchQuery) => {
                     set((state) => ({
                         queryState: { ...state.queryState, searchQuery, page: 1 }
@@ -219,7 +217,7 @@ export const useJobStore = create<JobStore>()(
                     await get().fetchJobs(query);
                 },
 
-                // Clear
+                
                 clearCurrentJob: () => set({ currentJob: null }),
                 clearError: () => set({ error: null })
             }),

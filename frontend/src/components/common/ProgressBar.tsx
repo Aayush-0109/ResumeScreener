@@ -2,7 +2,7 @@ import React from 'react';
 import { clsx } from 'clsx';
 
 export interface ProgressBarProps {
-    value: number; // 0-100
+    value: number; 
     max?: number;
     size?: 'sm' | 'md' | 'lg';
     variant?: 'default' | 'success' | 'warning' | 'danger';
@@ -64,9 +64,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
     );
 };
 
-/**
- * Indeterminate progress bar for unknown duration tasks
- */
+
 export const IndeterminateProgressBar: React.FC<{
     size?: 'sm' | 'md' | 'lg';
     variant?: 'default' | 'success' | 'warning' | 'danger';

@@ -15,10 +15,7 @@ export type MatchSortField =
 export type MatchSortOrder = 'asc' | 'desc';
 
 class MatchingService {
-    /**
-     * Enqueue a matching job
-     * Returns queueId for polling status
-     */
+    
     static async enqueueMatch(
         jobId: string,
         options?: MatchOptions
@@ -36,9 +33,7 @@ class MatchingService {
         }
     }
 
-    /**
-     * Get match queue status
-     */
+    
     static async getMatchStatus(
         queueId: string,
         signal?: AbortSignal
@@ -58,9 +53,7 @@ class MatchingService {
         }
     }
 
-    /**
-     * Cancel a matching job
-     */
+    
     static async cancelMatch(queueId: string): Promise<ApiResponse<{ queueId: string }>> {
         try {
             const response = await del<{ queueId: string }>(`/matches/match/${queueId}`);
@@ -71,11 +64,7 @@ class MatchingService {
         }
     }
 
-    /**
-     * List match results for a job
-     * Supports backend sorting (sortField + sortOrder)
-     * Supports pagination (page, limit)
-     */
+    
     static async listMatches(
         jobId: string,
         query?: ListMatchesQuery,
@@ -93,9 +82,7 @@ class MatchingService {
         }
     }
 
-    /**
-     * Clear all matches for a job
-     */
+    
     static async clearMatches(jobId: string): Promise<ApiResponse<{ deleted: number }>> {
         try {
             const response = await del<{ deleted: number }>(`/matches/match/${jobId}/matches`);
@@ -106,10 +93,7 @@ class MatchingService {
         }
     }
 
-    /**
-     * Export matches to CSV or JSON
-     * Returns a Blob for download
-     */
+    
     static async exportMatches(
         jobId: string,
         format: 'csv' | 'json',
@@ -127,9 +111,7 @@ class MatchingService {
         }
     }
 
-    /**
-     * Download exported matches as file
-     */
+    
     static downloadMatchesFile(blob: Blob, jobId: string, format: 'csv' | 'json'): void {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -141,9 +123,7 @@ class MatchingService {
         URL.revokeObjectURL(url);
     }
 
-    /**
-     * Build query with sort parameters
-     */
+    
     static buildQueryWithSort(
         sortField: MatchSortField = 'overallMatchScore',
         sortOrder: MatchSortOrder = 'desc',
@@ -158,9 +138,7 @@ class MatchingService {
         };
     }
 
-    /**
-     * Filter matches client-side by minimum score thresholds
-     */
+    
     static filterByScoreThresholds(
         matches: MatchResult[],
         thresholds?: {
@@ -183,9 +161,7 @@ class MatchingService {
         });
     }
 
-    /**
-     * Filter matches client-side by matched skills
-     */
+    
     static filterByMatchedSkills(
         matches: MatchResult[],
         requiredSkills: string[]
@@ -201,9 +177,7 @@ class MatchingService {
         );
     }
 
-    /**
-     * Filter matches client-side by experience gap
-     */
+    
     static filterByExperienceGap(
         matches: MatchResult[],
         maxGap?: number
@@ -216,9 +190,7 @@ class MatchingService {
         });
     }
 
-    /**
-     * Filter matches client-side by education match quality
-     */
+    
     static filterByEducationMatch(
         matches: MatchResult[],
         minQuality?: 'Perfect' | 'Good' | 'Fair'
@@ -235,30 +207,24 @@ class MatchingService {
         });
     }
 
-    /**
-     * Get top N matches
-     */
+    
     static getTopMatches(matches: MatchResult[], n: number): MatchResult[] {
         return matches.slice(0, n);
     }
 
-    /**
-     * Calculate average match score
-     */
+    
     static calculateAverageScore(matches: MatchResult[]): number {
         if (!matches.length) return 0;
         const sum = matches.reduce((acc, m) => acc + (m.overallMatchScore || 0), 0);
         return Math.round((sum / matches.length) * 100) / 100;
     }
 
-    /**
-     * Get score distribution
-     */
+    
     static getScoreDistribution(matches: MatchResult[]): {
-        excellent: number; // 90-100
-        good: number;      // 75-89
-        fair: number;      // 60-74
-        poor: number;      // <60
+        excellent: number; 
+        good: number;      
+        fair: number;      
+        poor: number;      
     } {
         return matches.reduce((acc, m) => {
             const score = m.overallMatchScore || 0;
@@ -270,9 +236,7 @@ class MatchingService {
         }, { excellent: 0, good: 0, fair: 0, poor: 0 });
     }
 
-    /**
-     * Get most common missing skills across all matches
-     */
+    
     static getMostCommonMissingSkills(matches: MatchResult[], topN: number = 10): Array<{ skill: string; count: number }> {
         const skillCounts = new Map<string, number>();
 
@@ -288,9 +252,7 @@ class MatchingService {
             .slice(0, topN);
     }
 
-    /**
-     * Handle and format errors
-     */
+    
     private static handleError(error: any, defaultMessage: string): Error {
         const message = error?.response?.data?.message || error?.message || defaultMessage;
         const newError = new Error(message);

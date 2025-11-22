@@ -16,7 +16,7 @@ export const createApiClient = (): AxiosInstance => {
         withCredentials: true
     });
 
-    // Prevent parallel refresh loops
+
     let isRefreshing = false as boolean;
     let refreshPromise: Promise<any> | null = null;
 
@@ -29,7 +29,7 @@ export const createApiClient = (): AxiosInstance => {
             config.headers = config.headers || {};
             (config.headers as any)['x-correlation-id'] = correlationId;
 
-            // Bust caches for GETs to avoid stale data without adding disallowed headers
+
             const method = (config.method || 'get').toLowerCase();
             if (method === 'get') {
                 config.params = { ...(config.params || {}), _ts: Date.now() } as any;
@@ -88,12 +88,19 @@ export const createApiClient = (): AxiosInstance => {
                 }
             }
 
-            // Centralized error toast
-            try {
-                const organized = organizeError(error);
-                const msg = getHumanMessage(organized);
-                toast.error(msg);
-            } catch { }
+            // Centralized error toast (but skip for silent auth operations)
+            const url = error.config?.url || '';
+            const isSilentAuthError = url.includes('/auth/refresh') ||
+                url.includes('/auth/profile') ||
+                url.includes('/auth/logout');
+
+            if (!isSilentAuthError) {
+                try {
+                    const organized = organizeError(error);
+                    const msg = getHumanMessage(organized);
+                    toast.error(msg);
+                } catch { }
+            }
 
             return Promise.reject(error);
         }
@@ -104,7 +111,7 @@ export const createApiClient = (): AxiosInstance => {
 
 export const apiClient = createApiClient();
 
-// Helper functions with typed responses
+
 export const get = <T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<ApiResponse<T>>> => {
     return apiClient.get<ApiResponse<T>>(url, config);
 };

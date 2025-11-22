@@ -1,21 +1,17 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-/**
- * Active polling job tracking
- */
+
 export interface ActivePollingJob {
     id: string;
     type: 'parse' | 'match';
-    jobId?: string; // For match jobs
+    jobId?: string; 
     status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
-    progress?: number; // 0-100
-    startedAt: number; // timestamp
+    progress?: number; 
+    startedAt: number; 
 }
 
-/**
- * Modal state management
- */
+
 export type ModalType =
     | 'upload-resumes'
     | 'parse-progress'
@@ -31,12 +27,10 @@ export type ModalType =
 export interface ModalState {
     type: ModalType;
     isOpen: boolean;
-    data?: any; // Modal-specific data
+    data?: any; 
 }
 
-/**
- * Notification preferences
- */
+
 export interface NotificationPreferences {
     parseComplete: boolean;
     parseFailed: boolean;
@@ -46,7 +40,7 @@ export interface NotificationPreferences {
 }
 
 interface UIStore {
-    // Modal management
+    
     modals: Map<ModalType, ModalState>;
     openModal: (type: ModalType, data?: any) => void;
     closeModal: (type: ModalType) => void;
@@ -54,7 +48,7 @@ interface UIStore {
     isModalOpen: (type: ModalType) => boolean;
     getModalData: (type: ModalType) => any;
 
-    // Polling job tracking
+    
     activePollingJobs: Map<string, ActivePollingJob>;
     addPollingJob: (job: ActivePollingJob) => void;
     updatePollingJob: (id: string, updates: Partial<ActivePollingJob>) => void;
@@ -65,20 +59,20 @@ interface UIStore {
     getActiveMatchJobs: () => ActivePollingJob[];
     hasActivePolling: () => boolean;
 
-    // Global loading states
+    
     globalLoading: boolean;
     setGlobalLoading: (loading: boolean) => void;
 
-    // Sidebar
+    
     sidebarCollapsed: boolean;
     toggleSidebar: () => void;
     setSidebarCollapsed: (collapsed: boolean) => void;
 
-    // Notification preferences
+    
     notificationPreferences: NotificationPreferences;
     setNotificationPreferences: (prefs: Partial<NotificationPreferences>) => void;
 
-    // Toasts (for tracking active toasts)
+    
     activeToasts: Set<string>;
     addToast: (id: string) => void;
     removeToast: (id: string) => void;
@@ -95,7 +89,7 @@ const defaultNotificationPreferences: NotificationPreferences = {
 export const useUIStore = create<UIStore>()(
     devtools(
         (set, get) => ({
-            // Modal management
+            
             modals: new Map(),
 
             openModal: (type, data) => {
@@ -126,7 +120,7 @@ export const useUIStore = create<UIStore>()(
                 return get().modals.get(type)?.data;
             },
 
-            // Polling job tracking
+            
             activePollingJobs: new Map(),
 
             addPollingJob: (job) => {
@@ -179,14 +173,14 @@ export const useUIStore = create<UIStore>()(
                     .some(job => ['PENDING', 'PROCESSING'].includes(job.status));
             },
 
-            // Global loading
+            
             globalLoading: false,
 
             setGlobalLoading: (loading) => {
                 set({ globalLoading: loading });
             },
 
-            // Sidebar
+            
             sidebarCollapsed: false,
 
             toggleSidebar: () => {
@@ -197,7 +191,7 @@ export const useUIStore = create<UIStore>()(
                 set({ sidebarCollapsed: collapsed });
             },
 
-            // Notification preferences
+            
             notificationPreferences: defaultNotificationPreferences,
 
             setNotificationPreferences: (prefs) => {
@@ -206,7 +200,7 @@ export const useUIStore = create<UIStore>()(
                 }));
             },
 
-            // Toasts
+            
             activeToasts: new Set(),
 
             addToast: (id) => {

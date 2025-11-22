@@ -1,13 +1,8 @@
-import { useEffect } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuthStore } from '../state/authStore'
 
 export default function PublicOnlyWrapper() {
-    const { isAuthenticated, bootstrapping, getProfile } = useAuthStore()
-
-    useEffect(() => {
-        if (bootstrapping) getProfile()
-    }, [bootstrapping, getProfile])
+    const { isAuthenticated, bootstrapping } = useAuthStore()
 
     if (bootstrapping) {
         return (

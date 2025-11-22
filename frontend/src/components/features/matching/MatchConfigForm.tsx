@@ -37,7 +37,7 @@ export const MatchConfigForm: React.FC<MatchConfigFormProps> = ({
     const [insightsTopK, setInsightsTopK] = useState<number>(5);
     const [weightError, setWeightError] = useState<string>('');
 
-    // Validate weights sum to 100
+    
     useEffect(() => {
         const sum = Object.values(weights).reduce((acc, val) => acc + val, 0);
         if (Math.abs(sum - 100) > 1) {
@@ -67,7 +67,7 @@ export const MatchConfigForm: React.FC<MatchConfigFormProps> = ({
             return;
         }
 
-        // Convert percentages to decimals for backend
+        
         const config: MatchConfig = {
             topN: topN || undefined,
             weights: {
@@ -90,7 +90,7 @@ export const MatchConfigForm: React.FC<MatchConfigFormProps> = ({
                 <CardHeader title="Matching Configuration" subtitle="Customize how resumes are scored" />
 
                 <div className="space-y-6">
-                    {/* Top N Results */}
+                    {}
                     <Select
                         label="Number of Top Results"
                         value={topN}
@@ -107,7 +107,7 @@ export const MatchConfigForm: React.FC<MatchConfigFormProps> = ({
                         helperText="How many top matches to return"
                     />
 
-                    {/* Score Weights */}
+                    {}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-3">
                             Score Weights
@@ -117,7 +117,7 @@ export const MatchConfigForm: React.FC<MatchConfigFormProps> = ({
                         </label>
 
                         <div className="space-y-4">
-                            {/* Skills Weight */}
+                            {}
                             <div>
                                 <div className="flex justify-between text-sm mb-1">
                                     <span className="text-gray-700">Skills Match</span>
@@ -142,7 +142,7 @@ export const MatchConfigForm: React.FC<MatchConfigFormProps> = ({
                                 />
                             </div>
 
-                            {/* Experience Weight */}
+                            {}
                             <div>
                                 <div className="flex justify-between text-sm mb-1">
                                     <span className="text-gray-700">Experience Match</span>
@@ -167,7 +167,7 @@ export const MatchConfigForm: React.FC<MatchConfigFormProps> = ({
                                 />
                             </div>
 
-                            {/* Education Weight */}
+                            {}
                             <div>
                                 <div className="flex justify-between text-sm mb-1">
                                     <span className="text-gray-700">Education Match</span>
@@ -192,7 +192,7 @@ export const MatchConfigForm: React.FC<MatchConfigFormProps> = ({
                                 />
                             </div>
 
-                            {/* Technical Weight */}
+                            {}
                             <div>
                                 <div className="flex justify-between text-sm mb-1">
                                     <span className="text-gray-700">Technical Fit</span>
@@ -223,7 +223,7 @@ export const MatchConfigForm: React.FC<MatchConfigFormProps> = ({
                         )}
                     </div>
 
-                    {/* AI Insights */}
+                    {}
                     <Select
                         label="Generate AI Insights"
                         value={insightsTopK}
@@ -238,7 +238,7 @@ export const MatchConfigForm: React.FC<MatchConfigFormProps> = ({
                         helperText="AI-generated insights for top candidates"
                     />
 
-                    {/* Action Buttons */}
+                    {}
                     <div className="flex gap-3 pt-4 border-t border-gray-200">
                         <Button
                             type="submit"
